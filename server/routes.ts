@@ -35,7 +35,9 @@ export async function registerRoutes(
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
       },
+      proxy: process.env.NODE_ENV === 'production', // Trust proxy for Render
     })
   );
 
