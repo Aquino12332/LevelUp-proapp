@@ -1,0 +1,92 @@
+# Render Blueprint Configuration
+# This file defines your infrastructure as code for Render
+
+services:
+  # Web Service (Docker-based deployment)
+  - type: web
+    name: levelup-app
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free  # Change to 'starter' or higher for production
+    region: oregon  # Choose: oregon, frankfurt, singapore, ohio, virginia
+    
+    # Build settings
+    dockerContext: .
+    
+    # Health check endpoint
+    healthCheckPath: /api/auth/me
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 10000  # Render uses port 10000 by default
+      
+      - key: DATABASE_URL
+        sync: false  # Set manually in Render dashboard or link to database service
+      
+      - key: SESSION_SECRET
+        generateValue: true  # Render will generate a secure random value
+      
+      - key: APP_URL
+        value: https://levelup-app.onrender.com  # Update with your actual Render URL
+      
+      # Google OAuth (Optional)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      
+      # Email Configuration (Optional)
+      - key: EMAIL_HOST
+        sync: false
+      
+      - key: EMAIL_PORT
+        sync: false
+      
+      - key: EMAIL_SECURE
+        sync: false
+      
+      - key: EMAIL_USER
+        sync: false
+      
+      - key: EMAIL_PASS
+        sync: false
+      
+      - key: EMAIL_FROM
+        sync: false
+      
+      # VAPID Keys for Push Notifications
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      
+      - key: VAPID_SUBJECT
+        sync: false
+      
+      # Google Gemini AI
+      - key: GEMINI_API_KEY
+        sync: false
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Scaling (only for paid plans)
+    # numInstances: 1
+    
+# Optional: PostgreSQL Database (if you want to use Render's managed database)
+# Uncomment if you don't want to use Neon
+# databases:
+#   - name: levelup-db
+#     databaseName: levelup
+#     user: levelup_user
+#     plan: free  # free tier available
+#     region: oregon

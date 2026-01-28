@@ -16,7 +16,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Expose port
+# Expose port (Render uses PORT env variable, default 10000)
 EXPOSE 5000
 
 # Set production environment

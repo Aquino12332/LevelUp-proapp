@@ -1,0 +1,53 @@
+═══════════════════════════════════════════════════════════
+  PRE-DEPLOYMENT CHECKLIST - Have These Ready First!
+═══════════════════════════════════════════════════════════
+
+📝 ACCOUNTS YOU NEED:
+  ☐ Render account (render.com) - FREE
+  ☐ GitHub/GitLab account with your code pushed
+  ☐ Neon account (neon.tech) - FREE PostgreSQL
+
+🔑 REQUIRED INFORMATION:
+  ☐ Neon DATABASE_URL (copy from Neon console)
+     Format: postgresql://user:pass@host/db?sslmode=require
+     
+     Where to get it:
+     1. Go to: console.neon.tech
+     2. Select your project
+     3. Click "Connection Details"
+     4. Copy the connection string
+
+💡 OPTIONAL (only if you want these features):
+
+  For Google Sign-In:
+  ☐ Google Client ID
+  ☐ Google Client Secret
+  ☐ Set up OAuth in console.cloud.google.com
+
+  For Password Reset Emails:
+  ☐ Gmail account (or other SMTP provider)
+  ☐ Gmail App Password (not regular password!)
+     Get from: myaccount.google.com/security
+
+  For Push Notifications:
+  ☐ VAPID keys (generate with: npx web-push generate-vapid-keys)
+
+  For AI Features:
+  ☐ Google Gemini API key
+     Get from: makersuite.google.com/app/apikey
+
+═══════════════════════════════════════════════════════════
+  READY? START WITH RENDER_STEP_BY_STEP.md
+═══════════════════════════════════════════════════════════
+
+Quick Links:
+• Render Dashboard: https://dashboard.render.com
+• Neon Console: https://console.neon.tech
+• Google Cloud Console: https://console.cloud.google.com
+• Google AI Studio: https://makersuite.google.com/app/apikey
+
+Time Required:
+• Minimum setup (required only): ~30 minutes
+• Full setup (all features): ~45 minutes
+
+═══════════════════════════════════════════════════════════
