@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Build output
+dist
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!DEPLOYMENT_GUIDE.md
+
+# Temporary files
+tmp_*
+.local
+
+# Replit specific
+.replit
+replit.nix
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

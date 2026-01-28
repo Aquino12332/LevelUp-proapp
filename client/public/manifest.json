@@ -1,0 +1,50 @@
+{
+  "name": "ProApp - Focus & Productivity",
+  "short_name": "ProApp",
+  "description": "Focus timer, task planner, and gamified productivity app with alarm system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "education", "lifestyle"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start Focus Session",
+      "short_name": "Focus",
+      "description": "Start a new focus session",
+      "url": "/focus",
+      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Tasks",
+      "short_name": "Tasks",
+      "description": "View your task planner",
+      "url": "/planner",
+      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/notes",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text"
+    }
+  }
+}
