@@ -13,9 +13,6 @@ services:
     # Build settings
     dockerContext: .
     
-    # Health check endpoint
-    healthCheckPath: /api/auth/me
-    
     # Environment variables
     envVars:
       - key: NODE_ENV
