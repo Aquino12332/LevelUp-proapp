@@ -452,6 +452,11 @@ export async function registerRoutes(
         alarmData.sound = "bell";
       }
       
+      // Ensure time has seconds (database expects HH:MM:SS format)
+      if (alarmData.time && alarmData.time.length === 5) {
+        alarmData.time = `${alarmData.time}:00`;
+      }
+      
       const alarm = await storage.createAlarm(userId, alarmData);
       res.status(201).json(alarm);
     } catch (error: any) {
