@@ -15,6 +15,9 @@ class AlarmSoundManager {
       console.log('[AlarmSound] Sound already playing, stopping previous first');
       this.stopSound();
     }
+    
+    // Clear any previously scheduled oscillators
+    this.scheduledOscillators = [];
     this.isPlaying = true;
 
     try {
@@ -263,13 +266,18 @@ class AlarmSoundManager {
       }
     }
 
-    // Stop all scheduled oscillators
+    // Stop all scheduled oscillators - but only those that haven't finished yet
     this.scheduledOscillators.forEach(osc => {
       try {
+        // Try to stop - will only work if oscillator is still active
         osc.stop();
+      } catch (e) {
+        // Already stopped - this is fine, ignore the error
+      }
+      try {
         osc.disconnect();
       } catch (e) {
-        // Already stopped or disconnected
+        // Already disconnected - ignore
       }
     });
     this.scheduledOscillators = [];
@@ -285,15 +293,16 @@ class AlarmSoundManager {
       this.oscillator = null;
     }
     
-    // Don't close the audio context - just suspend it
-    // Closing can cause issues with re-initialization
-    if (this.audioContext && this.audioContext.state === 'running') {
+    // Close and recreate audio context for clean state
+    // This ensures all sounds stop immediately
+    if (this.audioContext) {
       try {
-        this.audioContext.suspend();
-        console.log('[AlarmSound] Audio context suspended (not closed)');
+        this.audioContext.close();
+        console.log('[AlarmSound] Audio context closed');
       } catch (e) {
-        console.error("Error suspending audio context:", e);
+        console.error("Error closing audio context:", e);
       }
+      this.audioContext = null;
     }
     
     this.isPlaying = false;
