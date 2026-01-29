@@ -23,6 +23,8 @@ export function AlarmRinging({
 }: AlarmRingingProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSnoozeOptions, setShowSnoozeOptions] = useState(false);
+  const [soundPlaying, setSoundPlaying] = useState(false);
+  const [showSoundPrompt, setShowSoundPrompt] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,40 +36,67 @@ export function AlarmRinging({
   // Play sound when component mounts and handle cleanup
   useEffect(() => {
     console.log('[AlarmRinging] Component mounted, attempting to play sound:', sound);
+    let retryCount = 0;
+    const maxRetries = 5;
     
-    // Try to play sound immediately
+    // Try to play sound with multiple retry attempts
     const playAlarmSound = async () => {
       try {
         await alarmSounds.playSound(sound as SoundType, 300000); // Play for 5 minutes max
         console.log('[AlarmRinging] ✅ Sound playing successfully');
+        setSoundPlaying(true);
+        setShowSoundPrompt(false);
       } catch (error) {
-        console.error('[AlarmRinging] ❌ Failed to play sound on mount:', error);
+        console.error('[AlarmRinging] ❌ Failed to play sound (attempt ' + (retryCount + 1) + '):', error);
+        retryCount++;
         
-        // If it fails, retry on any user interaction
-        const retrySound = async () => {
-          try {
-            console.log('[AlarmRinging] Retrying sound after user interaction');
-            await alarmSounds.playSound(sound as SoundType, 300000);
-            console.log('[AlarmRinging] ✅ Sound playing after interaction');
-          } catch (retryError) {
-            console.error('[AlarmRinging] ❌ Sound retry also failed:', retryError);
-          }
-        };
+        // Show prompt to user after first failure
+        if (retryCount === 1) {
+          setShowSoundPrompt(true);
+        }
         
-        // Listen for user interaction to retry
-        document.addEventListener('click', retrySound, { once: true });
-        document.addEventListener('touchstart', retrySound, { once: true });
+        // Retry automatically with increasing delays
+        if (retryCount < maxRetries) {
+          const delay = retryCount * 500; // 500ms, 1000ms, 1500ms, etc.
+          setTimeout(playAlarmSound, delay);
+        }
       }
     };
     
+    // Start playing immediately
     playAlarmSound();
+    
+    // Also add interaction listener for immediate user action
+    const handleInteraction = async () => {
+      if (!soundPlaying) {
+        console.log('[AlarmRinging] User interaction detected, forcing sound play');
+        try {
+          await alarmSounds.playSound(sound as SoundType, 300000);
+          setSoundPlaying(true);
+          setShowSoundPrompt(false);
+          console.log('[AlarmRinging] ✅ Sound playing after user interaction');
+        } catch (error) {
+          console.error('[AlarmRinging] ❌ Sound failed even after user interaction:', error);
+        }
+      }
+    };
+    
+    // Listen for ANY user interaction
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+    document.addEventListener('touchend', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
     
     // Cleanup - stop sound when component unmounts
     return () => {
       console.log('[AlarmRinging] Component unmounting, stopping sound');
       alarmSounds.stopSound();
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('touchend', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
     };
-  }, [sound]);
+  }, [sound, soundPlaying]);
 
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
