@@ -49,33 +49,37 @@ export default function Shop() {
     : items.filter(item => item.category === activeTab);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between bg-gradient-to-r from-amber-100 to-orange-100 p-8 rounded-3xl">
+    <div className="space-y-6 pb-8">
+      {/* Header with Balance */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-amber-100 to-orange-100 p-6 sm:p-8 rounded-3xl">
         <div>
-          <h1 className="text-4xl font-heading font-bold text-amber-900">Campus Store</h1>
-          <p className="text-amber-800 mt-2">Spend your hard-earned coins on rewards!</p>
+          <h1 className="text-3xl sm:text-4xl font-heading font-bold text-amber-900">Campus Store</h1>
+          <p className="text-amber-800 mt-2 text-sm sm:text-base">Spend your hard-earned coins on rewards!</p>
         </div>
-        <div className="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/50 flex items-center gap-3 shadow-lg">
-          <img src={coinImg} className="h-12 w-12" />
+        <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border-2 border-amber-300 flex items-center gap-3 shadow-lg">
+          <img src={coinImg} className="h-10 w-10 sm:h-12 sm:w-12" alt="Coins" />
           <div>
             <span className="block text-xs font-bold text-amber-800 uppercase tracking-wider">Balance</span>
-            <span className="text-3xl font-bold text-amber-600">{stats.coins}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-amber-600">{stats.coins}</span>
           </div>
         </div>
       </div>
 
+      {/* Tabs with horizontal scroll */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All Items</TabsTrigger>
-          <TabsTrigger value="powerups">Power-ups</TabsTrigger>
-          <TabsTrigger value="themes">Themes</TabsTrigger>
-          <TabsTrigger value="cosmetics">Cosmetics</TabsTrigger>
-          <TabsTrigger value="music">Music</TabsTrigger>
-          <TabsTrigger value="inventory">
-            <Sparkles className="h-4 w-4 mr-2" />
-            My Inventory ({inventory.length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="mb-6 inline-flex min-w-max w-full sm:w-auto">
+            <TabsTrigger value="all">All Items</TabsTrigger>
+            <TabsTrigger value="powerups">Power-ups</TabsTrigger>
+            <TabsTrigger value="themes">Themes</TabsTrigger>
+            <TabsTrigger value="cosmetics">Cosmetics</TabsTrigger>
+            <TabsTrigger value="music">Music</TabsTrigger>
+            <TabsTrigger value="inventory">
+              <Sparkles className="h-4 w-4 mr-2" />
+              My Inventory ({inventory.length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value={activeTab} className="mt-0">
           {isLoading ? (
