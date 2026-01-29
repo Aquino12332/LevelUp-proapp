@@ -353,8 +353,8 @@ export default function AlarmPage() {
       return;
     }
 
-    // Validate custom sound is uploaded
-    if (formData.sound === "custom") {
+    // Validate custom sound is uploaded (only if "custom" is selected but no file uploaded yet)
+    if (formData.sound === "custom" && !formData.sound.startsWith("custom:")) {
       toast({
         title: "Validation Error",
         description: "Please upload a custom sound file first",
@@ -422,8 +422,8 @@ export default function AlarmPage() {
       return;
     }
 
-    // Validate custom sound is uploaded
-    if (formData.sound === "custom") {
+    // Validate custom sound is uploaded (only if "custom" is selected but no file uploaded yet)
+    if (formData.sound === "custom" && !formData.sound.startsWith("custom:")) {
       toast({
         title: "Validation Error",
         description: "Please upload a custom sound file first",
