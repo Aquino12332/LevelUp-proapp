@@ -28,6 +28,23 @@ export function AlarmRinging({
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-trigger interaction on mount to help with mobile audio
+  useEffect(() => {
+    // This helps resume suspended AudioContext on mobile
+    const triggerInteraction = () => {
+      console.log('[AlarmRinging] User interaction detected, audio should work now');
+    };
+    
+    // Listen for any user interaction
+    document.addEventListener('click', triggerInteraction, { once: true });
+    document.addEventListener('touchstart', triggerInteraction, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', triggerInteraction);
+      document.removeEventListener('touchstart', triggerInteraction);
+    };
+  }, []);
+
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",

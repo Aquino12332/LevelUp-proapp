@@ -47,9 +47,24 @@ export function useAlarmManager() {
           snoozeOptions: [5, 10, 15],
         });
 
-        // Play sound
+        // Play sound with retry logic for mobile
         console.log('[AlarmTrigger] Playing sound:', alarm.sound);
-        await alarmSounds.playSound(alarm.sound as SoundType);
+        try {
+          await alarmSounds.playSound(alarm.sound as SoundType);
+          console.log('[AlarmTrigger] ✅ Sound playing successfully');
+        } catch (soundError) {
+          console.error('[AlarmTrigger] ❌ Sound failed to play:', soundError);
+          console.log('[AlarmTrigger] Retrying sound after brief delay...');
+          // Retry after a short delay (gives time for user interaction)
+          setTimeout(async () => {
+            try {
+              await alarmSounds.playSound(alarm.sound as SoundType);
+              console.log('[AlarmTrigger] ✅ Sound playing on retry');
+            } catch (retryError) {
+              console.error('[AlarmTrigger] ❌ Sound retry also failed:', retryError);
+            }
+          }, 500);
+        }
 
         // Request notification permission if needed
         if ("Notification" in window && Notification.permission !== "granted") {
