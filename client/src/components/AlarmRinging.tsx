@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Volume2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { alarmSounds, type SoundType } from "@/lib/alarmSounds";
 
 interface AlarmRingingProps {
   label: string;
   time: string;
+  sound: string;
   snoozeOptions: number[];
   onSnooze: (minutes: number) => void;
   onDismiss: () => void;
@@ -14,6 +16,7 @@ interface AlarmRingingProps {
 export function AlarmRinging({
   label,
   time,
+  sound,
   snoozeOptions,
   onSnooze,
   onDismiss,
@@ -28,22 +31,43 @@ export function AlarmRinging({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-trigger interaction on mount to help with mobile audio
+  // Play sound when component mounts and handle cleanup
   useEffect(() => {
-    // This helps resume suspended AudioContext on mobile
-    const triggerInteraction = () => {
-      console.log('[AlarmRinging] User interaction detected, audio should work now');
+    console.log('[AlarmRinging] Component mounted, attempting to play sound:', sound);
+    
+    // Try to play sound immediately
+    const playAlarmSound = async () => {
+      try {
+        await alarmSounds.playSound(sound as SoundType, 300000); // Play for 5 minutes max
+        console.log('[AlarmRinging] ✅ Sound playing successfully');
+      } catch (error) {
+        console.error('[AlarmRinging] ❌ Failed to play sound on mount:', error);
+        
+        // If it fails, retry on any user interaction
+        const retrySound = async () => {
+          try {
+            console.log('[AlarmRinging] Retrying sound after user interaction');
+            await alarmSounds.playSound(sound as SoundType, 300000);
+            console.log('[AlarmRinging] ✅ Sound playing after interaction');
+          } catch (retryError) {
+            console.error('[AlarmRinging] ❌ Sound retry also failed:', retryError);
+          }
+        };
+        
+        // Listen for user interaction to retry
+        document.addEventListener('click', retrySound, { once: true });
+        document.addEventListener('touchstart', retrySound, { once: true });
+      }
     };
     
-    // Listen for any user interaction
-    document.addEventListener('click', triggerInteraction, { once: true });
-    document.addEventListener('touchstart', triggerInteraction, { once: true });
+    playAlarmSound();
     
+    // Cleanup - stop sound when component unmounts
     return () => {
-      document.removeEventListener('click', triggerInteraction);
-      document.removeEventListener('touchstart', triggerInteraction);
+      console.log('[AlarmRinging] Component unmounting, stopping sound');
+      alarmSounds.stopSound();
     };
-  }, []);
+  }, [sound]);
 
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",

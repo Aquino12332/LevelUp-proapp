@@ -58,6 +58,7 @@ function Router() {
         <AlarmRinging
           label={activeAlarm.label}
           time={activeAlarm.time}
+          sound={activeAlarm.sound}
           snoozeOptions={activeAlarm.snoozeOptions}
           onSnooze={snoozeAlarm}
           onDismiss={dismissAlarm}
