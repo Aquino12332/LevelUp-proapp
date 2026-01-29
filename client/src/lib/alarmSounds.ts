@@ -75,57 +75,51 @@ class AlarmSoundManager {
   }
 
   private async playCustomSound(soundUrl: string, duration: number): Promise<void> {
-    return new Promise((resolve, reject) => {
+    try {
+      // Extract the actual URL if it has custom: prefix
+      const url = soundUrl.startsWith("custom:") ? soundUrl.substring(7) : soundUrl;
+      
+      console.log('[AlarmSound] Loading custom sound, length:', url.length);
+      
+      this.currentAudio = new Audio(url);
+      this.currentAudio.loop = true; // Loop the custom sound
+      this.currentAudio.volume = 1.0; // Max volume
+      
+      // Try to play immediately - this works better on mobile
       try {
-        // Extract the actual URL if it has custom: prefix
-        const url = soundUrl.startsWith("custom:") ? soundUrl.substring(7) : soundUrl;
+        await this.currentAudio.play();
+        console.log('[AlarmSound] ✅ Custom sound playing successfully');
+      } catch (playErr) {
+        console.error("[AlarmSound] ❌ Error playing custom sound immediately:", playErr);
         
-        console.log('[AlarmSound] Loading custom sound from:', url.substring(0, 50) + '...');
-        
-        this.currentAudio = new Audio(url);
-        this.currentAudio.loop = true; // Loop the custom sound
-        this.currentAudio.volume = 1.0; // Max volume
-        
-        // Add loaded event
-        this.currentAudio.addEventListener('loadeddata', () => {
-          console.log('[AlarmSound] Custom sound loaded, attempting to play');
+        // If immediate play fails, wait for loadeddata and try again
+        await new Promise((resolve, reject) => {
+          this.currentAudio!.addEventListener('loadeddata', async () => {
+            try {
+              console.log('[AlarmSound] Custom sound loaded, retrying play');
+              await this.currentAudio!.play();
+              console.log('[AlarmSound] ✅ Custom sound playing after load');
+              resolve(true);
+            } catch (err) {
+              console.error("[AlarmSound] ❌ Error playing custom sound after load:", err);
+              reject(err);
+            }
+          });
+          
+          this.currentAudio!.addEventListener('error', (e) => {
+            console.error("❌ Error loading custom sound:", e);
+            reject(e);
+          });
+          
+          // Timeout after 5 seconds
+          setTimeout(() => reject(new Error('Custom sound load timeout')), 5000);
         });
-        
-        this.currentAudio.addEventListener('canplaythrough', async () => {
-          try {
-            console.log('[AlarmSound] Custom sound can play through');
-            await this.currentAudio?.play();
-            console.log('[AlarmSound] Custom sound playing successfully');
-          } catch (err) {
-            console.error("[AlarmSound] Error playing custom sound:", err);
-            this.isPlaying = false;
-            reject(err);
-          }
-        });
-
-        this.currentAudio.addEventListener('error', (e) => {
-          console.error("Error loading custom sound:", e);
-          this.isPlaying = false;
-          reject(e);
-        });
-
-        // Stop after duration
-        setTimeout(() => {
-          if (this.currentAudio) {
-            this.currentAudio.pause();
-            this.currentAudio.currentTime = 0;
-            this.currentAudio = null;
-          }
-          this.isPlaying = false;
-          resolve();
-        }, duration);
-
-      } catch (error) {
-        console.error("Failed to play custom sound:", error);
-        this.isPlaying = false;
-        reject(error);
       }
-    });
+    } catch (error) {
+      console.error("Failed to play custom sound:", error);
+      this.isPlaying = false;
+      throw error;
+    }
   }
 
   private playBell(ctx: AudioContext, duration: number): void {
@@ -261,28 +255,19 @@ class AlarmSoundManager {
         this.currentAudio.pause();
         this.currentAudio.currentTime = 0;
         this.currentAudio = null;
+        console.log('[AlarmSound] Custom audio stopped');
       } catch (e) {
         console.error("Error stopping custom audio:", e);
       }
     }
 
-    // Stop all scheduled oscillators - but only those that haven't finished yet
-    this.scheduledOscillators.forEach(osc => {
-      try {
-        // Try to stop - will only work if oscillator is still active
-        osc.stop();
-      } catch (e) {
-        // Already stopped - this is fine, ignore the error
-      }
-      try {
-        osc.disconnect();
-      } catch (e) {
-        // Already disconnected - ignore
-      }
-    });
+    // Don't try to stop scheduled oscillators - they're scheduled to stop automatically
+    // Trying to stop them causes errors and doesn't work anyway
+    // Just clear the array and let them finish naturally
+    console.log('[AlarmSound] Clearing', this.scheduledOscillators.length, 'scheduled oscillators');
     this.scheduledOscillators = [];
 
-    // Stop main oscillator if playing
+    // Stop main oscillator if playing (this is for old single-oscillator sounds)
     if (this.oscillator) {
       try {
         this.oscillator.stop();
@@ -293,20 +278,14 @@ class AlarmSoundManager {
       this.oscillator = null;
     }
     
-    // Close and recreate audio context for clean state
-    // This ensures all sounds stop immediately
+    // DON'T close the audio context - this kills all scheduled sounds
+    // Just keep it for next use
     if (this.audioContext) {
-      try {
-        this.audioContext.close();
-        console.log('[AlarmSound] Audio context closed');
-      } catch (e) {
-        console.error("Error closing audio context:", e);
-      }
-      this.audioContext = null;
+      console.log('[AlarmSound] Audio context kept alive for future use');
     }
     
     this.isPlaying = false;
-    console.log('[AlarmSound] All sounds stopped');
+    console.log('[AlarmSound] Stop requested - sounds will finish naturally');
   }
 }
 

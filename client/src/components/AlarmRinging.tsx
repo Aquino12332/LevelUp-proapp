@@ -121,10 +121,25 @@ export function AlarmRinging({
         `}</style>
 
         <div className="alarm-vibrate text-center space-y-6">
+          {/* Sound prompt banner */}
+          {showSoundPrompt && (
+            <div className="bg-yellow-500 text-black px-4 py-3 rounded-lg font-bold animate-pulse">
+              🔊 Tap anywhere to enable sound!
+            </div>
+          )}
+          
           {/* Sound Icon Animation */}
           <div className="flex justify-center">
-            <div className="relative w-24 h-24 bg-red-500 rounded-full flex items-center justify-center">
+            <div className={cn(
+              "relative w-24 h-24 rounded-full flex items-center justify-center",
+              soundPlaying ? "bg-green-500" : "bg-red-500"
+            )}>
               <Volume2 className="w-12 h-12 text-white" />
+              {!soundPlaying && (
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold">
+                  !
+                </div>
+              )}
             </div>
           </div>
 
