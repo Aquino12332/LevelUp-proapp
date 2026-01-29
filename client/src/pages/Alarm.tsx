@@ -345,10 +345,10 @@ export default function AlarmPage() {
     }
 
     // Validate custom sound is uploaded
-    if (formData.sound === "custom" && !formData.sound.startsWith("custom:")) {
+    if (formData.sound === "custom") {
       toast({
         title: "Validation Error",
-        description: "Please upload a custom sound file",
+        description: "Please upload a custom sound file first",
         variant: "destructive",
       });
       return;

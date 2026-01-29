@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useGamification } from "@/lib/gamification";
 import { useTasks } from "@/hooks/useTasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,14 +14,61 @@ import avatarImg from '@assets/generated_images/3d_student_avatar.png';
 export default function Dashboard() {
   const { stats, addCoins, addXp } = useGamification();
   const { tasks, toggleTaskComplete } = useTasks();
+  const [todayStats, setTodayStats] = useState({ studyTime: 0, tasksCompleted: 0 });
 
   // Get today's incomplete tasks (limit to 3)
   const dailyTasks = tasks.filter(t => !t.completed).slice(0, 3);
 
+  // Calculate today's stats
+  useEffect(() => {
+    const calculateTodayStats = async () => {
+      try {
+        // Get today's completed tasks
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const completedToday = tasks.filter(t => {
+          if (!t.completed || !t.updatedAt) return false;
+          const taskDate = new Date(t.updatedAt);
+          taskDate.setHours(0, 0, 0, 0);
+          return taskDate.getTime() === today.getTime();
+        });
+
+        // Get today's focus sessions
+        const response = await fetch('/api/focus-sessions');
+        if (response.ok) {
+          const sessions = await response.json();
+          const todaySessions = sessions.filter((s: any) => {
+            const sessionDate = new Date(s.startTime);
+            sessionDate.setHours(0, 0, 0, 0);
+            return sessionDate.getTime() === today.getTime() && s.completed;
+          });
+          
+          // Calculate total study time in hours
+          const totalMinutes = todaySessions.reduce((acc: number, s: any) => acc + (s.duration || 0), 0);
+          const hours = totalMinutes / 60;
+          
+          setTodayStats({
+            studyTime: hours,
+            tasksCompleted: completedToday.length
+          });
+        }
+      } catch (err) {
+        console.error('Failed to calculate today stats:', err);
+      }
+    };
+
+    calculateTodayStats();
+  }, [tasks]);
+
   const handleCompleteTask = (id: string) => {
     toggleTaskComplete(id, true);
-    addCoins(10);
-    addXp(15);
+    // Calculate streak bonus
+    const streakBonus = Math.floor(stats.streak / 5) * 2; // +2 coins per 5-day streak
+    const totalCoins = 10 + streakBonus;
+    const totalXp = 15 + streakBonus;
+    
+    addCoins(totalCoins);
+    addXp(totalXp);
   };
 
   return (
@@ -79,7 +126,11 @@ export default function Dashboard() {
           <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
             <Clock className="h-10 w-10 text-indigo-500" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">4.5h</div>
+              <div className="text-2xl font-bold text-indigo-600">
+                {todayStats.studyTime > 0 
+                  ? `${todayStats.studyTime.toFixed(1)}h` 
+                  : '0h'}
+              </div>
               <div className="text-xs font-medium text-indigo-400 uppercase tracking-wider">Study Time</div>
             </div>
           </CardContent>
@@ -89,7 +140,7 @@ export default function Dashboard() {
           <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
             <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">12</div>
+              <div className="text-2xl font-bold text-emerald-600">{todayStats.tasksCompleted}</div>
               <div className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Tasks Done</div>
             </div>
           </CardContent>
