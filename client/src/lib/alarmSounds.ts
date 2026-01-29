@@ -127,26 +127,34 @@ class AlarmSoundManager {
   private playBell(ctx: AudioContext, duration: number): void {
     const gainNode = ctx.createGain();
     gainNode.connect(ctx.destination);
+    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
 
     const frequencies = [800, 1200, 1600];
-    let stopTime = ctx.currentTime + duration / 1000;
+    const bellDuration = 1.0; // Duration of one bell ring
+    const stopTime = ctx.currentTime + duration / 1000;
 
-    frequencies.forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      osc.frequency.value = freq;
-      osc.type = "sine";
-      osc.connect(gainNode);
+    // Loop the bell sound
+    let time = ctx.currentTime;
+    while (time < stopTime) {
+      frequencies.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        osc.connect(gainNode);
 
-      const delay = idx * 0.05;
-      osc.start(ctx.currentTime + delay);
-      osc.stop(stopTime);
-    });
-
-    // Louder volume
-    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, stopTime);
+        const delay = idx * 0.05;
+        const startTime = time + delay;
+        const endTime = Math.min(startTime + bellDuration, stopTime);
+        
+        if (startTime < stopTime) {
+          osc.start(startTime);
+          osc.stop(endTime);
+        }
+      });
+      time += bellDuration + 0.5; // Ring every 1.5 seconds
+    }
     
-    console.log('[AlarmSound] Bell sound configured');
+    console.log('[AlarmSound] Bell sound configured with looping');
   }
 
   private playChime(ctx: AudioContext, duration: number): void {
@@ -184,18 +192,28 @@ class AlarmSoundManager {
   private playBuzz(ctx: AudioContext, duration: number): void {
     const gainNode = ctx.createGain();
     gainNode.connect(ctx.destination);
-
-    const osc = ctx.createOscillator();
-    osc.frequency.value = 1000;
-    osc.type = "square";
-    osc.connect(gainNode);
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
 
     const stopTime = ctx.currentTime + duration / 1000;
-    osc.start(ctx.currentTime);
-    osc.stop(stopTime);
+    const buzzDuration = 0.5; // Duration of one buzz
+    const pauseDuration = 0.3; // Pause between buzzes
 
-    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, stopTime);
+    // Loop the buzz sound
+    let time = ctx.currentTime;
+    while (time < stopTime) {
+      const osc = ctx.createOscillator();
+      osc.frequency.value = 1000;
+      osc.type = "square";
+      osc.connect(gainNode);
+
+      const endTime = Math.min(time + buzzDuration, stopTime);
+      osc.start(time);
+      osc.stop(endTime);
+      
+      time += buzzDuration + pauseDuration;
+    }
+    
+    console.log('[AlarmSound] Buzz sound configured with looping');
   }
 
   private playPiano(ctx: AudioContext, duration: number): void {
