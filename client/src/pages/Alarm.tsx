@@ -344,6 +344,15 @@ export default function AlarmPage() {
       return;
     }
 
+    if (!formData.label.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Alarm label cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate custom sound is uploaded
     if (formData.sound === "custom") {
       toast({
@@ -355,14 +364,25 @@ export default function AlarmPage() {
     }
 
     try {
+      // Ensure userId is set (use demo-user as fallback)
+      const actualUserId = userId || "demo-user";
+      
+      // Prepare alarm data with all required fields
+      const alarmPayload = {
+        userId: actualUserId,
+        label: formData.label.trim(),
+        time: formData.time,
+        sound: formData.sound || "bell",
+        enabled: true,
+        repeatDays: formData.repeatDays || "[]",
+      };
+
+      console.log("Creating alarm with payload:", alarmPayload);
+
       const response = await fetch("/api/alarms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId || "demo-user",
-          ...formData,
-          enabled: true,
-        }),
+        body: JSON.stringify(alarmPayload),
       });
 
       if (response.ok) {
@@ -375,6 +395,7 @@ export default function AlarmPage() {
       } else {
         // Handle error responses from backend
         const errorData = await response.json().catch(() => ({ error: "Failed to create alarm" }));
+        console.error("Alarm creation failed:", errorData);
         toast({
           title: "Cannot create alarm",
           description: errorData.error || "Failed to create alarm",
@@ -382,6 +403,7 @@ export default function AlarmPage() {
         });
       }
     } catch (error) {
+      console.error("Error creating alarm:", error);
       toast({
         title: "Error",
         description: "Failed to create alarm. Please try again.",

@@ -417,6 +417,15 @@ export async function registerRoutes(
         return res.status(400).json({ error: "userId is required" });
       }
       
+      // Validate required fields
+      if (!alarmData.label || alarmData.label.trim() === "") {
+        return res.status(400).json({ error: "Alarm label is required" });
+      }
+      
+      if (!alarmData.time) {
+        return res.status(400).json({ error: "Alarm time is required" });
+      }
+      
       // Check alarm limit
       const existingAlarms = await storage.getUserAlarms(userId);
       if (existingAlarms.length >= LIMITS.MAX_ALARMS_PER_USER) {
@@ -428,10 +437,26 @@ export async function registerRoutes(
         return res.status(400).json({ error: `Alarm label must be ${LIMITS.MAX_ALARM_LABEL_LENGTH} characters or less` });
       }
       
+      // Ensure repeatDays defaults to empty array if not provided
+      if (!alarmData.repeatDays) {
+        alarmData.repeatDays = "[]";
+      }
+      
+      // Ensure enabled defaults to true if not provided
+      if (alarmData.enabled === undefined) {
+        alarmData.enabled = true;
+      }
+      
+      // Ensure sound defaults to bell if not provided
+      if (!alarmData.sound) {
+        alarmData.sound = "bell";
+      }
+      
       const alarm = await storage.createAlarm(userId, alarmData);
       res.status(201).json(alarm);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create alarm" });
+    } catch (error: any) {
+      console.error("Error creating alarm:", error);
+      res.status(500).json({ error: error.message || "Failed to create alarm" });
     }
   });
 
