@@ -467,7 +467,14 @@ export async function registerRoutes(
 
   app.put("/api/alarms/:id", async (req, res) => {
     try {
-      const alarm = await storage.updateAlarm(req.params.id, req.body);
+      const updateData = req.body;
+      
+      // Ensure time has seconds (database expects HH:MM:SS format)
+      if (updateData.time && updateData.time.length === 5) {
+        updateData.time = `${updateData.time}:00`;
+      }
+      
+      const alarm = await storage.updateAlarm(req.params.id, updateData);
       if (!alarm) {
         return res.status(404).json({ error: "Alarm not found" });
       }
