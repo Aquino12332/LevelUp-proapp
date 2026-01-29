@@ -6,6 +6,7 @@ class AlarmSoundManager {
   private gainNode: GainNode | null = null;
   private isPlaying = false;
   private currentAudio: HTMLAudioElement | null = null;
+  private scheduledOscillators: OscillatorNode[] = []; // Track all scheduled oscillators
 
   async playSound(soundType: SoundType, duration: number = 60000): Promise<void> {
     console.log('[AlarmSound] Playing sound:', soundType, 'for', duration, 'ms');
@@ -149,12 +150,13 @@ class AlarmSoundManager {
         if (startTime < stopTime) {
           osc.start(startTime);
           osc.stop(endTime);
+          this.scheduledOscillators.push(osc); // Track for cleanup
         }
       });
       time += bellDuration + 0.5; // Ring every 1.5 seconds
     }
     
-    console.log('[AlarmSound] Bell sound configured with looping');
+    console.log('[AlarmSound] Bell sound configured with looping for', duration / 1000, 'seconds');
   }
 
   private playChime(ctx: AudioContext, duration: number): void {
@@ -180,6 +182,7 @@ class AlarmSoundManager {
 
         osc.start(time);
         osc.stop(time + note.duration);
+        this.scheduledOscillators.push(osc); // Track for cleanup
         time += note.duration + 0.1;
       });
       totalDuration = time - ctx.currentTime;
@@ -187,6 +190,7 @@ class AlarmSoundManager {
 
     gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + maxDuration);
+    console.log('[AlarmSound] Chime sound configured with looping for', duration / 1000, 'seconds');
   }
 
   private playBuzz(ctx: AudioContext, duration: number): void {
@@ -209,11 +213,12 @@ class AlarmSoundManager {
       const endTime = Math.min(time + buzzDuration, stopTime);
       osc.start(time);
       osc.stop(endTime);
+      this.scheduledOscillators.push(osc); // Track for cleanup
       
       time += buzzDuration + pauseDuration;
     }
     
-    console.log('[AlarmSound] Buzz sound configured with looping');
+    console.log('[AlarmSound] Buzz sound configured with looping for', duration / 1000, 'seconds');
   }
 
   private playPiano(ctx: AudioContext, duration: number): void {
@@ -234,15 +239,19 @@ class AlarmSoundManager {
 
         osc.start(time);
         osc.stop(time + 0.3);
+        this.scheduledOscillators.push(osc); // Track for cleanup
       });
       time += 0.5;
     }
 
     gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, stopTime);
+    console.log('[AlarmSound] Piano sound configured with looping for', duration / 1000, 'seconds');
   }
 
   stopSound(): void {
+    console.log('[AlarmSound] Stopping all sounds');
+    
     // Stop custom audio if playing
     if (this.currentAudio) {
       try {
@@ -254,20 +263,41 @@ class AlarmSoundManager {
       }
     }
 
-    // Stop synthesized sound if playing
+    // Stop all scheduled oscillators
+    this.scheduledOscillators.forEach(osc => {
+      try {
+        osc.stop();
+        osc.disconnect();
+      } catch (e) {
+        // Already stopped or disconnected
+      }
+    });
+    this.scheduledOscillators = [];
+
+    // Stop main oscillator if playing
     if (this.oscillator) {
       try {
         this.oscillator.stop();
+        this.oscillator.disconnect();
       } catch (e) {
         // Already stopped
       }
       this.oscillator = null;
     }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
+    
+    // Don't close the audio context - just suspend it
+    // Closing can cause issues with re-initialization
+    if (this.audioContext && this.audioContext.state === 'running') {
+      try {
+        this.audioContext.suspend();
+        console.log('[AlarmSound] Audio context suspended (not closed)');
+      } catch (e) {
+        console.error("Error suspending audio context:", e);
+      }
     }
+    
     this.isPlaying = false;
+    console.log('[AlarmSound] All sounds stopped');
   }
 }
 
