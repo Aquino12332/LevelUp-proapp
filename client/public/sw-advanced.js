@@ -16,6 +16,15 @@ const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/favicon.png',
+  '/signin',
+  '/dashboard',
+  '/planner',
+  '/focus',
+  '/notes',
+  '/alarms',
+  '/shop',
+  '/profile',
+  '/social',
 ];
 
 // Install event - cache static assets
@@ -88,9 +97,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML pages - Network first
+  // HTML pages - Network first with aggressive caching
   if (request.destination === 'document' || request.mode === 'navigate') {
-    event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
+    event.respondWith(
+      networkFirstStrategy(request, DYNAMIC_CACHE).catch(async () => {
+        // If network fails, try to serve the root HTML as fallback
+        const cache = await caches.open(STATIC_CACHE);
+        return cache.match('/') || new Response('Offline', { status: 503 });
+      })
+    );
     return;
   }
 
