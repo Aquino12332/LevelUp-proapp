@@ -11,8 +11,8 @@ class AlarmSoundManager {
     console.log('[AlarmSound] Playing sound:', soundType, 'for', duration, 'ms');
     
     if (this.isPlaying) {
-      console.log('[AlarmSound] Sound already playing, skipping');
-      return;
+      console.log('[AlarmSound] Sound already playing, stopping previous first');
+      this.stopSound();
     }
     this.isPlaying = true;
 
@@ -27,15 +27,28 @@ class AlarmSoundManager {
       if (!this.audioContext) {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         this.audioContext = new AudioContextClass();
-        console.log('[AlarmSound] Audio context created');
+        console.log('[AlarmSound] Audio context created, state:', this.audioContext.state);
       }
 
       const ctx = this.audioContext;
       
-      // Resume audio context if suspended (browser autoplay policy)
+      // CRITICAL: Resume audio context if suspended (browser autoplay policy)
+      // This is required on mobile browsers
       if (ctx.state === 'suspended') {
-        await ctx.resume();
-        console.log('[AlarmSound] Audio context resumed');
+        console.log('[AlarmSound] Audio context suspended, attempting to resume...');
+        try {
+          await ctx.resume();
+          console.log('[AlarmSound] Audio context resumed successfully, state:', ctx.state);
+        } catch (err) {
+          console.error('[AlarmSound] Failed to resume audio context:', err);
+          throw new Error('Cannot play sound - audio context suspended. Please interact with the page first.');
+        }
+      }
+      
+      // Double check state
+      if (ctx.state !== 'running') {
+        console.error('[AlarmSound] Audio context not running, state:', ctx.state);
+        throw new Error('Cannot play sound - audio not ready. Try tapping the screen first.');
       }
 
       console.log('[AlarmSound] Playing built-in sound:', soundType);
@@ -63,15 +76,27 @@ class AlarmSoundManager {
         // Extract the actual URL if it has custom: prefix
         const url = soundUrl.startsWith("custom:") ? soundUrl.substring(7) : soundUrl;
         
+        console.log('[AlarmSound] Loading custom sound from:', url.substring(0, 50) + '...');
+        
         this.currentAudio = new Audio(url);
         this.currentAudio.loop = true; // Loop the custom sound
+        this.currentAudio.volume = 1.0; // Max volume
         
-        this.currentAudio.addEventListener('canplaythrough', () => {
-          this.currentAudio?.play().catch(err => {
-            console.error("Error playing custom sound:", err);
+        // Add loaded event
+        this.currentAudio.addEventListener('loadeddata', () => {
+          console.log('[AlarmSound] Custom sound loaded, attempting to play');
+        });
+        
+        this.currentAudio.addEventListener('canplaythrough', async () => {
+          try {
+            console.log('[AlarmSound] Custom sound can play through');
+            await this.currentAudio?.play();
+            console.log('[AlarmSound] Custom sound playing successfully');
+          } catch (err) {
+            console.error("[AlarmSound] Error playing custom sound:", err);
             this.isPlaying = false;
             reject(err);
-          });
+          }
         });
 
         this.currentAudio.addEventListener('error', (e) => {
