@@ -96,7 +96,7 @@ export function AlarmRinging({
       document.removeEventListener('touchend', handleInteraction);
       document.removeEventListener('keydown', handleInteraction);
     };
-  }, [sound, soundPlaying]);
+  }, [sound]); // Only re-run if sound changes, NOT when soundPlaying changes
 
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
