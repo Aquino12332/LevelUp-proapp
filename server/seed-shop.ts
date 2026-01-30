@@ -49,12 +49,12 @@ const shopItems = [
     effectValue: JSON.stringify({ duration: 120, multiplier: 2 }),
   },
   {
-    name: "Task Auto-Complete",
-    description: "Instantly complete one task of your choice.",
-    price: "250",
+    name: "Daily Task Auto-Complete",
+    description: "Instantly complete one daily task of your choice.",
+    price: 250,
     category: "powerups",
     icon: "✅",
-    effectType: "auto_complete_task",
+    effectType: "auto_complete_daily_task",
     effectValue: JSON.stringify({ count: 1 }),
   },
 
