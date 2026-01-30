@@ -510,9 +510,12 @@ export default function AlarmPage() {
   };
 
   const handleEdit = (alarm: Alarm) => {
+    // Extract HH:MM from time (in case it's stored as HH:MM:SS)
+    const time = alarm.time.substring(0, 5);
+    
     setFormData({
       label: alarm.label,
-      time: alarm.time,
+      time: time,
       sound: alarm.sound,
       repeatDays: alarm.repeatDays || "[]",
     });

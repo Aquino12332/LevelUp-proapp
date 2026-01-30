@@ -261,10 +261,21 @@ class AlarmSoundManager {
       }
     }
 
-    // Don't try to stop scheduled oscillators - they're scheduled to stop automatically
-    // Trying to stop them causes errors and doesn't work anyway
-    // Just clear the array and let them finish naturally
-    console.log('[AlarmSound] Clearing', this.scheduledOscillators.length, 'scheduled oscillators');
+    // Actually stop and disconnect all scheduled oscillators
+    // Use separate try-catch for each operation to handle errors gracefully
+    console.log('[AlarmSound] Stopping', this.scheduledOscillators.length, 'scheduled oscillators');
+    this.scheduledOscillators.forEach((osc, index) => {
+      try {
+        osc.stop();
+      } catch (e) {
+        // Oscillator may have already finished - this is fine
+      }
+      try {
+        osc.disconnect();
+      } catch (e) {
+        // Already disconnected - this is fine
+      }
+    });
     this.scheduledOscillators = [];
 
     // Stop main oscillator if playing (this is for old single-oscillator sounds)
@@ -278,14 +289,19 @@ class AlarmSoundManager {
       this.oscillator = null;
     }
     
-    // DON'T close the audio context - this kills all scheduled sounds
-    // Just keep it for next use
+    // Close the audio context to ensure all sounds stop immediately
     if (this.audioContext) {
-      console.log('[AlarmSound] Audio context kept alive for future use');
+      try {
+        this.audioContext.close();
+        this.audioContext = null;
+        console.log('[AlarmSound] Audio context closed');
+      } catch (e) {
+        console.error("Error closing audio context:", e);
+      }
     }
     
     this.isPlaying = false;
-    console.log('[AlarmSound] Stop requested - sounds will finish naturally');
+    console.log('[AlarmSound] All sounds stopped');
   }
 }
 
