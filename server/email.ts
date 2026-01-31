@@ -150,29 +150,36 @@ This is an automated email. Please don't reply to this message.
   };
 
   try {
-    // Try Resend first if configured
-    if (isResendConfigured()) {
-      return await sendWithResend(email, mailOptions.subject, mailOptions.html);
-    }
-
-    // Fall back to SMTP if configured
-    if (!transporter) {
-      // Development mode: log to console
-      console.log("\n=== 📧 PASSWORD RESET EMAIL (DEV MODE) ===");
-      console.log(`To: ${email}`);
-      console.log(`Username: ${username}`);
-      console.log(`Reset URL: ${resetUrl}`);
-      console.log(`Token: ${resetToken}`);
-      console.log("=========================================\n");
+    // Try SMTP first if configured (more reliable for any recipient)
+    if (transporter) {
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Password reset email sent via SMTP to ${email}`);
       return true;
     }
 
-    // Production mode: send actual email via SMTP
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${email}`);
+    // Fall back to Resend if SMTP not configured
+    if (isResendConfigured()) {
+      console.log('📧 Using Resend as fallback...');
+      return await sendWithResend(email, mailOptions.subject, mailOptions.html);
+    }
+
+    // Development mode: log to console if nothing configured
+    console.log("\n=== 📧 PASSWORD RESET EMAIL (DEV MODE) ===");
+    console.log(`To: ${email}`);
+    console.log(`Username: ${username}`);
+    console.log(`Reset URL: ${resetUrl}`);
+    console.log(`Token: ${resetToken}`);
+    console.log("=========================================\n");
     return true;
   } catch (error) {
     console.error("❌ Error sending password reset email:", error);
+    
+    // Try Resend as last resort if SMTP fails
+    if (isResendConfigured()) {
+      console.log('⚠️ SMTP failed, trying Resend as last resort...');
+      return await sendWithResend(email, mailOptions.subject, mailOptions.html);
+    }
+    
     return false;
   }
 }
