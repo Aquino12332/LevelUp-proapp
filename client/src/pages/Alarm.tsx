@@ -134,14 +134,15 @@ export default function AlarmPage() {
     try {
       setIsPlayingSound(true);
       
-      // Play all sounds for 5 seconds for testing (pattern-based sounds will loop automatically)
+      // Play sound for 5 seconds - the audio manager handles auto-stop internally
       await alarmSounds.playSound(formData.sound as SoundType, 5000);
       
-      // Auto-stop after 5 seconds
+      // Just update UI state when done - don't call stopSound again
+      // The sound will auto-stop after 5 seconds via internal timeout
       setTimeout(() => {
-        alarmSounds.stopSound();
         setIsPlayingSound(false);
-      }, 5000);
+        console.log("Test sound finished");
+      }, 5100); // Slightly longer than duration to ensure clean stop
     } catch (error) {
       console.error("Failed to play sound:", error);
       setIsPlayingSound(false);

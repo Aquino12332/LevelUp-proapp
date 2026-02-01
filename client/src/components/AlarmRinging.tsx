@@ -22,6 +22,8 @@ export function AlarmRinging({
   onSnooze,
   onDismiss,
 }: AlarmRingingProps) {
+  console.log('[AlarmRinging] 🎨 Component rendering - label:', label, 'time:', time, 'sound:', sound);
+  
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSnoozeOptions, setShowSnoozeOptions] = useState(false);
   const [soundPlaying, setSoundPlaying] = useState(false);

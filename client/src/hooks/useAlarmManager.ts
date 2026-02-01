@@ -114,8 +114,7 @@ export function useAlarmManager() {
   // Check if alarm should trigger
   const checkAlarmTrigger = useCallback(async () => {
     if (alarms.length === 0) {
-      console.log('[Alarm Check] No alarms to check');
-      return;
+      return; // Silent when no alarms
     }
 
     const now = new Date();
@@ -126,7 +125,7 @@ export function useAlarmManager() {
     const currentDay = dayNames[now.getDay()];
     const today = now.toDateString();
 
-    console.log(`[Alarm Check] Checking ${alarms.length} alarms at ${currentTime}`);
+    console.log(`[Alarm Check] 🔍 Checking ${alarms.length} alarms at ${currentTime} on ${currentDay}`);
 
     for (const alarm of alarms) {
       try {
@@ -172,7 +171,8 @@ export function useAlarmManager() {
         // Extract HH:MM from alarm.time (could be HH:MM or HH:MM:SS)
         const alarmTime = alarm.time.substring(0, 5); // Get first 5 chars (HH:MM)
         
-        console.log(`[Alarm Check] ${alarm.label} - time: ${alarmTime}, current: ${currentTime}, match: ${alarmTime === currentTime}, isRepeatDay: ${isRepeatDay}`);
+        const timeMatch = alarmTime === currentTime;
+        console.log(`[Alarm Check] ${alarm.label} - alarm:${alarmTime} vs current:${currentTime} = ${timeMatch ? '✅ MATCH' : '❌ no match'}, day:${isRepeatDay ? '✅ yes' : '❌ no'}`);
         
         if (alarmTime === currentTime && isRepeatDay) {
           // Check if already triggered today (within last 2 minutes to prevent duplicates)
