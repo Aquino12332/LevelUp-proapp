@@ -133,11 +133,15 @@ export default function AlarmPage() {
 
     try {
       setIsPlayingSound(true);
-      await alarmSounds.playSound(formData.sound as SoundType, 3000); // Play for 3 seconds
+      
+      // Play all sounds for 5 seconds for testing (pattern-based sounds will loop automatically)
+      await alarmSounds.playSound(formData.sound as SoundType, 5000);
+      
+      // Auto-stop after 5 seconds
       setTimeout(() => {
         alarmSounds.stopSound();
         setIsPlayingSound(false);
-      }, 3000);
+      }, 5000);
     } catch (error) {
       console.error("Failed to play sound:", error);
       setIsPlayingSound(false);

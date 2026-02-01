@@ -7,6 +7,8 @@ class AlarmSoundManager {
   private isPlaying = false;
   private currentAudio: HTMLAudioElement | null = null;
   private scheduledOscillators: OscillatorNode[] = []; // Track all scheduled oscillators
+  private loopTimeoutId: number | null = null; // For managing sound loops
+  private currentSoundType: SoundType | null = null; // Track what's playing
 
   async playSound(soundType: SoundType, duration: number = 60000): Promise<void> {
     console.log('[AlarmSound] Playing sound:', soundType, 'for', duration, 'ms');
@@ -19,6 +21,7 @@ class AlarmSoundManager {
     // Clear any previously scheduled oscillators
     this.scheduledOscillators = [];
     this.isPlaying = true;
+    this.currentSoundType = soundType;
 
     try {
       // Check if it's a custom sound (starts with data: or http)
@@ -57,14 +60,21 @@ class AlarmSoundManager {
 
       console.log('[AlarmSound] Playing built-in sound:', soundType);
 
-      if (soundType === "bell") {
-        this.playBell(ctx, duration);
-      } else if (soundType === "chime") {
-        this.playChime(ctx, duration);
-      } else if (soundType === "buzz") {
-        this.playBuzz(ctx, duration);
-      } else if (soundType === "piano") {
-        this.playPiano(ctx, duration);
+      // For long durations, use looping strategy to avoid memory issues
+      if (duration > 30000) {
+        console.log('[AlarmSound] Long duration - using looping strategy');
+        await this.playWithLooping(soundType, duration);
+      } else {
+        // For short durations, play directly
+        if (soundType === "bell") {
+          this.playBell(ctx, duration);
+        } else if (soundType === "chime") {
+          this.playChime(ctx, duration);
+        } else if (soundType === "buzz") {
+          this.playBuzz(ctx, duration);
+        } else if (soundType === "piano") {
+          this.playPiano(ctx, duration);
+        }
       }
       
       console.log('[AlarmSound] Sound started successfully');
@@ -72,6 +82,57 @@ class AlarmSoundManager {
       console.error("[AlarmSound] Failed to play alarm sound:", error);
       this.isPlaying = false;
     }
+  }
+
+  private async playWithLooping(soundType: SoundType, totalDuration: number): Promise<void> {
+    const chunkDuration = 15000; // Play 15 seconds at a time
+    let elapsed = 0;
+    
+    const playChunk = () => {
+      if (!this.isPlaying || !this.audioContext) {
+        console.log('[AlarmSound] Looping stopped (isPlaying:', this.isPlaying, ')');
+        return;
+      }
+      
+      const remainingTime = totalDuration - elapsed;
+      const nextChunkDuration = Math.min(chunkDuration, remainingTime);
+      
+      console.log('[AlarmSound] Playing chunk:', elapsed, 'to', elapsed + nextChunkDuration, 'of', totalDuration);
+      
+      // Clean up finished oscillators before adding new ones
+      // Only remove oscillators that have already finished playing
+      const now = this.audioContext.currentTime;
+      this.scheduledOscillators = this.scheduledOscillators.filter(osc => {
+        // We can't directly check if an oscillator is finished, so we keep all of them
+        // The cleanup will happen in stopSound
+        return true;
+      });
+      
+      // Play the next chunk - each method will add to scheduledOscillators
+      if (soundType === "bell") {
+        this.playBell(this.audioContext, nextChunkDuration);
+      } else if (soundType === "chime") {
+        this.playChime(this.audioContext, nextChunkDuration);
+      } else if (soundType === "buzz") {
+        this.playBuzz(this.audioContext, nextChunkDuration);
+      } else if (soundType === "piano") {
+        this.playPiano(this.audioContext, nextChunkDuration);
+      }
+      
+      elapsed += nextChunkDuration;
+      
+      // Schedule next chunk if we haven't reached the end
+      if (elapsed < totalDuration && this.isPlaying) {
+        // Schedule the next chunk to start a bit before the current one ends for seamless playback
+        const scheduleDelay = Math.max(nextChunkDuration - 500, 100); // 500ms overlap
+        this.loopTimeoutId = window.setTimeout(playChunk, scheduleDelay);
+      } else {
+        console.log('[AlarmSound] Looping completed');
+      }
+    };
+    
+    // Start the first chunk
+    playChunk();
   }
 
   private async playCustomSound(soundUrl: string, duration: number): Promise<void> {
@@ -123,28 +184,51 @@ class AlarmSoundManager {
   }
 
   private playBell(ctx: AudioContext, duration: number): void {
-    console.log('[AlarmSound] Starting CONTINUOUS bell sound');
+    console.log('[AlarmSound] Starting bell sound with repeating pattern');
     
-    // Create a single continuous oscillator that just keeps playing
-    const osc = ctx.createOscillator();
+    // Create gain node for volume control
     const gainNode = ctx.createGain();
-    
-    osc.type = "sine";
-    osc.frequency.value = 800; // Main bell frequency
-    osc.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
-    // Set louder volume
-    gainNode.gain.setValueAtTime(0.8, ctx.currentTime);
-    
-    // Start playing immediately and keep playing
-    osc.start(ctx.currentTime);
-    
-    // Store it so we can stop it later
-    this.oscillator = osc;
     this.gainNode = gainNode;
     
-    console.log('[AlarmSound] Continuous bell playing - will NOT stop until dismissed!');
+    // Bell uses a repeating pattern instead of continuous tone
+    // This is more reliable on mobile and sounds better
+    const bellFrequency = 800; // Hz
+    const patternDuration = 0.8; // seconds per ring
+    const gapDuration = 0.4; // seconds between rings
+    const totalPatternTime = patternDuration + gapDuration;
+    
+    let time = ctx.currentTime;
+    const endTime = time + (duration / 1000);
+    
+    // Create repeating bell rings
+    while (time < endTime) {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = bellFrequency;
+      osc.connect(gainNode);
+      
+      // Envelope for natural bell sound
+      const oscGain = ctx.createGain();
+      osc.connect(oscGain);
+      oscGain.connect(gainNode);
+      
+      // Attack and decay envelope
+      oscGain.gain.setValueAtTime(0, time);
+      oscGain.gain.linearRampToValueAtTime(0.8, time + 0.01); // Fast attack
+      oscGain.gain.exponentialRampToValueAtTime(0.01, time + patternDuration); // Decay
+      
+      osc.start(time);
+      osc.stop(time + patternDuration);
+      
+      this.scheduledOscillators.push(osc);
+      time += totalPatternTime;
+    }
+    
+    // Set overall volume
+    gainNode.gain.setValueAtTime(1.0, ctx.currentTime);
+    
+    console.log('[AlarmSound] Bell pattern scheduled for', duration / 1000, 'seconds');
   }
 
   private playChime(ctx: AudioContext, duration: number): void {
@@ -182,28 +266,40 @@ class AlarmSoundManager {
   }
 
   private playBuzz(ctx: AudioContext, duration: number): void {
-    console.log('[AlarmSound] Starting CONTINUOUS buzz sound');
+    console.log('[AlarmSound] Starting buzz sound with pulsing pattern');
     
-    // Create a single continuous oscillator
-    const osc = ctx.createOscillator();
+    // Create gain node for volume control
     const gainNode = ctx.createGain();
-    
-    osc.type = "square";
-    osc.frequency.value = 1000; // Buzz frequency
-    osc.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
-    // Set louder volume
-    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-    
-    // Start playing immediately and keep playing
-    osc.start(ctx.currentTime);
-    
-    // Store it so we can stop it later
-    this.oscillator = osc;
     this.gainNode = gainNode;
     
-    console.log('[AlarmSound] Continuous buzz playing - will NOT stop until dismissed!');
+    // Buzz uses a pulsing pattern - more attention-grabbing and mobile-friendly
+    const buzzFrequency = 400; // Hz (lower for better mobile speakers)
+    const pulseOnDuration = 0.3; // seconds
+    const pulseOffDuration = 0.2; // seconds
+    const totalPulseTime = pulseOnDuration + pulseOffDuration;
+    
+    let time = ctx.currentTime;
+    const endTime = time + (duration / 1000);
+    
+    // Create repeating buzz pulses
+    while (time < endTime) {
+      const osc = ctx.createOscillator();
+      osc.type = "square";
+      osc.frequency.value = buzzFrequency;
+      osc.connect(gainNode);
+      
+      osc.start(time);
+      osc.stop(time + pulseOnDuration);
+      
+      this.scheduledOscillators.push(osc);
+      time += totalPulseTime;
+    }
+    
+    // Set louder volume for buzz
+    gainNode.gain.setValueAtTime(0.6, ctx.currentTime);
+    
+    console.log('[AlarmSound] Buzz pattern scheduled for', duration / 1000, 'seconds');
   }
 
   private playPiano(ctx: AudioContext, duration: number): void {
@@ -237,6 +333,13 @@ class AlarmSoundManager {
   stopSound(): void {
     console.log('[AlarmSound] Stopping all sounds');
     
+    // Clear loop timeout if exists
+    if (this.loopTimeoutId !== null) {
+      clearTimeout(this.loopTimeoutId);
+      this.loopTimeoutId = null;
+      console.log('[AlarmSound] Loop timeout cleared');
+    }
+    
     // Stop custom audio if playing
     if (this.currentAudio) {
       try {
@@ -249,47 +352,68 @@ class AlarmSoundManager {
       }
     }
 
-    // Actually stop and disconnect all scheduled oscillators
-    // Use separate try-catch for each operation to handle errors gracefully
-    console.log('[AlarmSound] Stopping', this.scheduledOscillators.length, 'scheduled oscillators');
-    this.scheduledOscillators.forEach((osc, index) => {
+    // Fade out gain node if exists to prevent clicks
+    if (this.gainNode && this.audioContext && this.audioContext.state === 'running') {
       try {
-        osc.stop();
+        const currentTime = this.audioContext.currentTime;
+        this.gainNode.gain.cancelScheduledValues(currentTime);
+        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, currentTime);
+        this.gainNode.gain.linearRampToValueAtTime(0.001, currentTime + 0.03); // 30ms fade out
       } catch (e) {
-        // Oscillator may have already finished - this is fine
+        console.log('[AlarmSound] Fade out failed (already stopped?):', e);
       }
-      try {
-        osc.disconnect();
-      } catch (e) {
-        // Already disconnected - this is fine
-      }
-    });
-    this.scheduledOscillators = [];
-
-    // Stop main oscillator if playing (this is for old single-oscillator sounds)
-    if (this.oscillator) {
-      try {
-        this.oscillator.stop();
-        this.oscillator.disconnect();
-      } catch (e) {
-        // Already stopped
-      }
-      this.oscillator = null;
     }
-    
-    // Close the audio context to ensure all sounds stop immediately
-    if (this.audioContext) {
-      try {
-        this.audioContext.close();
-        this.audioContext = null;
-        console.log('[AlarmSound] Audio context closed');
-      } catch (e) {
-        console.error("Error closing audio context:", e);
+
+    // Stop and disconnect all scheduled oscillators after a brief delay for fade
+    setTimeout(() => {
+      console.log('[AlarmSound] Stopping', this.scheduledOscillators.length, 'scheduled oscillators');
+      this.scheduledOscillators.forEach((osc) => {
+        try {
+          osc.stop();
+        } catch (e) {
+          // Oscillator may have already finished - this is fine
+        }
+        try {
+          osc.disconnect();
+        } catch (e) {
+          // Already disconnected - this is fine
+        }
+      });
+      this.scheduledOscillators = [];
+
+      // Clean up main oscillator if exists (legacy)
+      if (this.oscillator) {
+        try {
+          this.oscillator.stop();
+          this.oscillator.disconnect();
+        } catch (e) {
+          // Already stopped
+        }
+        this.oscillator = null;
       }
+      
+      // Clean up gain node
+      if (this.gainNode) {
+        try {
+          this.gainNode.disconnect();
+        } catch (e) {
+          // Already disconnected
+        }
+        this.gainNode = null;
+      }
+      
+      console.log('[AlarmSound] All oscillators cleaned up');
+    }, 40); // Wait for fade out
+    
+    // DON'T close the audio context - keep it alive for reuse to prevent clicks
+    // Closing and reopening causes audible pops/clicks
+    if (this.audioContext && this.audioContext.state === 'running') {
+      console.log('[AlarmSound] Audio context kept alive (state: ' + this.audioContext.state + ')');
     }
     
     this.isPlaying = false;
-    console.log('[AlarmSound] All sounds stopped');
+    this.currentSoundType = null;
+    console.log('[AlarmSound] Stop initiated (fade out in progress)');
   }
 }
 

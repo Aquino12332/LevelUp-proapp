@@ -38,14 +38,27 @@ export function useAlarmManager() {
   const triggerAlarm = useCallback(
     async (alarm: Alarm) => {
       console.log('[AlarmTrigger] 🔔 TRIGGERING ALARM:', alarm.label);
+      console.log('[AlarmTrigger] Alarm details:', JSON.stringify(alarm, null, 2));
+      console.log('[AlarmTrigger] Device info:', {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+        screenSize: `${window.innerWidth}x${window.innerHeight}`
+      });
       
       try {
         // Set active alarm modal FIRST
         console.log('[AlarmTrigger] Setting active alarm modal');
-        setActiveAlarm({
+        const activeAlarmData = {
           ...alarm,
           snoozeOptions: [5, 10, 15],
-        });
+        };
+        console.log('[AlarmTrigger] Active alarm data:', activeAlarmData);
+        setActiveAlarm(activeAlarmData);
+        
+        // Force a small delay to ensure state update propagates
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('[AlarmTrigger] Active alarm state set, modal should appear now');
 
         // Sound will be played by the AlarmRinging component
         console.log('[AlarmTrigger] Alarm triggered, sound will play in modal');

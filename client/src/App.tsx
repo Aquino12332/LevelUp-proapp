@@ -28,6 +28,19 @@ function Router() {
   // Global alarm manager - works on all pages
   const { activeAlarm, snoozeAlarm, dismissAlarm } = useAlarmManager();
 
+  // Debug logging for activeAlarm state
+  useEffect(() => {
+    console.log('[App.Router] activeAlarm state changed:', activeAlarm ? 'ACTIVE' : 'null');
+    if (activeAlarm) {
+      console.log('[App.Router] activeAlarm details:', {
+        label: activeAlarm.label,
+        time: activeAlarm.time,
+        sound: activeAlarm.sound,
+        snoozeOptions: activeAlarm.snoozeOptions
+      });
+    }
+  }, [activeAlarm]);
+
   return (
     <>
       <Switch>
@@ -54,15 +67,20 @@ function Router() {
       </Switch>
 
       {/* Global alarm notification - shows on any page */}
-      {activeAlarm && (
-        <AlarmRinging
-          label={activeAlarm.label}
-          time={activeAlarm.time}
-          sound={activeAlarm.sound}
-          snoozeOptions={activeAlarm.snoozeOptions}
-          onSnooze={snoozeAlarm}
-          onDismiss={dismissAlarm}
-        />
+      {activeAlarm ? (
+        <>
+          {console.log('[App.Router] 🚨 RENDERING AlarmRinging COMPONENT')}
+          <AlarmRinging
+            label={activeAlarm.label}
+            time={activeAlarm.time}
+            sound={activeAlarm.sound}
+            snoozeOptions={activeAlarm.snoozeOptions}
+            onSnooze={snoozeAlarm}
+            onDismiss={dismissAlarm}
+          />
+        </>
+      ) : (
+        console.log('[App.Router] No active alarm, AlarmRinging not rendered')
       )}
     </>
   );
