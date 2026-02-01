@@ -36,7 +36,7 @@ const DAYS = [
 ];
 
 export default function AlarmPage() {
-  const { alarms, loading, fetchAlarms } = useAlarmManager();
+  const { alarms, loading, fetchAlarms, triggerAlarm } = useAlarmManager();
   const { userId } = useGamification();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -152,6 +152,27 @@ export default function AlarmPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Test modal function for debugging
+  const testModal = async () => {
+    console.log("🧪 Testing alarm modal...");
+    const testAlarm: any = {
+      id: 999999,
+      userId: 1,
+      time: "00:00",
+      label: "🧪 TEST MODAL",
+      sound: formData.sound,
+      repeatDays: "[]",
+      enabled: true,
+      snoozedUntil: null,
+      createdAt: new Date(),
+      lastTriggered: null,
+    };
+    
+    console.log("🧪 Triggering test alarm with data:", testAlarm);
+    await triggerAlarm(testAlarm);
+    console.log("🧪 Test alarm triggered! Check if modal appears.");
   };
 
   const resetForm = () => {
@@ -547,13 +568,22 @@ export default function AlarmPage() {
         </div>
 
         {!showForm ? (
-          <Button
-            onClick={() => setShowForm(true)}
-            className="mb-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Alarm
-          </Button>
+          <div className="flex gap-2 mb-6">
+            <Button
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Alarm
+            </Button>
+            <Button
+              onClick={testModal}
+              variant="outline"
+              className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
+            >
+              🧪 Test Modal
+            </Button>
+          </div>
         ) : (
           <Card className="mb-6 p-6 bg-slate-800 border-slate-700">
             <h2 className="text-xl font-bold text-white mb-4">

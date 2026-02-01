@@ -286,5 +286,6 @@ export function useAlarmManager() {
     snoozeAlarm,
     dismissAlarm,
     fetchAlarms,
+    triggerAlarm, // Expose for testing
   };
 }

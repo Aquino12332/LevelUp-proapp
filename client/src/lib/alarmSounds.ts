@@ -51,10 +51,11 @@ class AlarmSoundManager {
       this.audio = new Audio(audioUrl);
       this.audio.loop = true; // Loop continuously
       this.audio.volume = this.volume;
+      this.audio.preload = 'auto'; // Preload for smoother playback
 
-      // Add event listeners
+      // Add event listeners for debugging
       this.audio.addEventListener('ended', () => {
-        console.log('[AlarmSound] Audio ended');
+        console.log('[AlarmSound] Audio ended (should not happen with loop=true)');
         this.playState = 'idle';
       });
 
@@ -64,7 +65,19 @@ class AlarmSoundManager {
       });
 
       this.audio.addEventListener('canplay', () => {
-        console.log('[AlarmSound] Audio can play');
+        console.log('[AlarmSound] ✅ Audio ready to play');
+      });
+
+      this.audio.addEventListener('playing', () => {
+        console.log('[AlarmSound] ▶️ Audio is playing');
+      });
+
+      this.audio.addEventListener('pause', () => {
+        console.log('[AlarmSound] ⏸️ Audio paused');
+      });
+
+      this.audio.addEventListener('stalled', () => {
+        console.warn('[AlarmSound] ⚠️ Audio stalled');
       });
 
       // Try to play
@@ -114,23 +127,37 @@ class AlarmSoundManager {
   }
 
   stopSound(): void {
-    console.log('[AlarmSound] 🛑 Stopping sound');
+    console.log('[AlarmSound] 🛑 Stopping sound, current state:', this.playState);
 
     // Clear stop timeout if exists
     if (this.stopTimeoutId !== null) {
       clearTimeout(this.stopTimeoutId);
       this.stopTimeoutId = null;
+      console.log('[AlarmSound] Cleared stop timeout');
     }
 
     // Stop and clean up audio element
     if (this.audio) {
       try {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-        this.audio = null;
-        console.log('[AlarmSound] ✅ Audio stopped and cleaned up');
+        // Fade out for smooth stop
+        const currentVolume = this.audio.volume;
+        this.audio.volume = currentVolume * 0.5;
+        
+        setTimeout(() => {
+          if (this.audio) {
+            this.audio.pause();
+            this.audio.currentTime = 0;
+            // Remove all event listeners
+            this.audio.onended = null;
+            this.audio.onerror = null;
+            this.audio = null;
+            console.log('[AlarmSound] ✅ Audio stopped and cleaned up');
+          }
+        }, 50); // 50ms fade
+        
       } catch (e) {
         console.error('[AlarmSound] Error stopping audio:', e);
+        this.audio = null;
       }
     }
 
