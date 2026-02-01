@@ -362,6 +362,57 @@ export async function registerRoutes(
     }
   });
 
+  // Admin endpoint for manual password resets
+  app.post("/api/admin/reset-password", async (req, res) => {
+    try {
+      const { adminSecret, email, newPassword } = req.body;
+
+      // Validate admin secret
+      if (!process.env.ADMIN_SECRET) {
+        return res.status(500).json({ error: "Admin secret not configured" });
+      }
+
+      if (adminSecret !== process.env.ADMIN_SECRET) {
+        console.warn(`⚠️ Unauthorized admin password reset attempt for email: ${email}`);
+        return res.status(403).json({ error: "Unauthorized - Invalid admin secret" });
+      }
+
+      // Validate inputs
+      if (!email || !newPassword) {
+        return res.status(400).json({ error: "Email and new password are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ error: `User not found with email: ${email}` });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await storage.updatePassword(user.id, hashedPassword);
+
+      console.log(`✅ Admin password reset successful for user: ${email}`);
+
+      res.json({ 
+        success: true, 
+        message: `Password successfully reset for ${email}`,
+        userId: user.id,
+        username: user.username
+      });
+    } catch (error) {
+      console.error("❌ Admin password reset error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   app.post("/api/auth/verify-reset-token", async (req, res) => {
     try {
       const { token } = req.body;
