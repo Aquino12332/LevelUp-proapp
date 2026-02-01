@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Volume2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { alarmSounds, type SoundType } from "@/lib/alarmSounds";
+import { wakeLockManager } from "@/lib/wakeLock";
 
 interface AlarmRingingProps {
   label: string;
@@ -38,6 +39,31 @@ export function AlarmRinging({
     console.log('[AlarmRinging] Component mounted, attempting to play sound:', sound);
     let soundAttempted = false; // Prevent multiple simultaneous attempts
     
+    // Request wake lock to keep screen on (mobile)
+    const requestWakeLock = async () => {
+      const acquired = await wakeLockManager.request();
+      if (acquired) {
+        console.log('[AlarmRinging] ✅ Wake lock acquired - screen will stay on');
+      }
+    };
+    requestWakeLock();
+
+    // Start vibration pattern (mobile)
+    if ('vibrate' in navigator) {
+      // Vibrate in repeating pattern: 500ms on, 200ms off
+      const vibratePattern = [500, 200, 500, 200, 500, 1000];
+      navigator.vibrate(vibratePattern);
+      console.log('[AlarmRinging] 📳 Vibration started');
+      
+      // Keep vibrating every 2 seconds
+      const vibrateInterval = setInterval(() => {
+        navigator.vibrate(vibratePattern);
+      }, 2000);
+      
+      // Store for cleanup
+      (window as any).__alarmVibrateInterval = vibrateInterval;
+    }
+    
     // Try to play sound
     const playAlarmSound = async () => {
       if (soundAttempted) {
@@ -65,8 +91,20 @@ export function AlarmRinging({
     
     // Cleanup - stop sound when component unmounts
     return () => {
-      console.log('[AlarmRinging] Component unmounting, stopping sound');
+      console.log('[AlarmRinging] Component unmounting, stopping sound and wake lock');
       alarmSounds.stopSound();
+      wakeLockManager.release();
+      
+      // Stop vibration
+      if ('vibrate' in navigator) {
+        navigator.vibrate(0); // Stop vibration
+        const vibrateInterval = (window as any).__alarmVibrateInterval;
+        if (vibrateInterval) {
+          clearInterval(vibrateInterval);
+          (window as any).__alarmVibrateInterval = null;
+        }
+        console.log('[AlarmRinging] 📳 Vibration stopped');
+      }
     };
   }, [sound]); // Only re-run if sound type changes
 
