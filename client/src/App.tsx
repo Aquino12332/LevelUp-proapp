@@ -4,12 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GamificationProvider } from "@/lib/gamification";
+import { AlarmProvider, useAlarm } from "@/contexts/AlarmContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import SplashScreen from "@/components/SplashScreen";
 import NotFound from "@/pages/not-found";
 import { useState, useEffect } from "react";
-import { useAlarmManager } from "@/hooks/useAlarmManager";
 import { AlarmRinging } from "@/components/AlarmRinging";
 
 import Dashboard from "@/pages/Dashboard";
@@ -26,7 +26,7 @@ import ResetPassword from "@/pages/ResetPassword";
 
 function Router() {
   // Global alarm manager - works on all pages
-  const { activeAlarm, snoozeAlarm, dismissAlarm } = useAlarmManager();
+  const { activeAlarm, snoozeAlarm, dismissAlarm } = useAlarm();
 
   // Debug logging for activeAlarm state
   useEffect(() => {
@@ -108,15 +108,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <GamificationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <OfflineIndicator />
-          {showSplash && !hasShownSplash ? (
-            <SplashScreen onFinish={handleSplashFinish} />
-          ) : (
-            <Router />
-          )}
-        </TooltipProvider>
+        <AlarmProvider>
+          <TooltipProvider>
+            <Toaster />
+            <OfflineIndicator />
+            {showSplash && !hasShownSplash ? (
+              <SplashScreen onFinish={handleSplashFinish} />
+            ) : (
+              <Router />
+            )}
+          </TooltipProvider>
+        </AlarmProvider>
       </GamificationProvider>
     </QueryClientProvider>
   );

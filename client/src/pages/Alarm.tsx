@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Plus, Clock, Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAlarmManager } from "@/hooks/useAlarmManager";
+import { useAlarm } from "@/contexts/AlarmContext";
 import { useGamification } from "@/lib/gamification";
 import type { Alarm } from "@shared/schema";
 import { alarmSounds, type SoundType } from "@/lib/alarmSounds";
@@ -36,7 +36,7 @@ const DAYS = [
 ];
 
 export default function AlarmPage() {
-  const { alarms, loading, fetchAlarms, triggerAlarm } = useAlarmManager();
+  const { alarms, loading, fetchAlarms, triggerAlarm } = useAlarm();
   const { userId } = useGamification();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
