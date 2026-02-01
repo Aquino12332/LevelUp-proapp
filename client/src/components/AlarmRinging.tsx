@@ -36,67 +36,53 @@ export function AlarmRinging({
   // Play sound when component mounts and handle cleanup
   useEffect(() => {
     console.log('[AlarmRinging] Component mounted, attempting to play sound:', sound);
-    let retryCount = 0;
-    const maxRetries = 5;
+    let soundAttempted = false; // Prevent multiple simultaneous attempts
     
-    // Try to play sound with multiple retry attempts
+    // Try to play sound
     const playAlarmSound = async () => {
+      if (soundAttempted) {
+        console.log('[AlarmRinging] Sound already attempted, skipping duplicate call');
+        return;
+      }
+      soundAttempted = true;
+      
       try {
+        console.log('[AlarmRinging] Starting sound playback...');
         await alarmSounds.playSound(sound as SoundType, 300000); // Play for 5 minutes max
         console.log('[AlarmRinging] ✅ Sound playing successfully');
         setSoundPlaying(true);
         setShowSoundPrompt(false);
       } catch (error) {
-        console.error('[AlarmRinging] ❌ Failed to play sound (attempt ' + (retryCount + 1) + '):', error);
-        retryCount++;
-        
-        // Show prompt to user after first failure
-        if (retryCount === 1) {
-          setShowSoundPrompt(true);
-        }
-        
-        // Retry automatically with increasing delays
-        if (retryCount < maxRetries) {
-          const delay = retryCount * 500; // 500ms, 1000ms, 1500ms, etc.
-          setTimeout(playAlarmSound, delay);
-        }
+        console.error('[AlarmRinging] ❌ Failed to play sound:', error);
+        // Show prompt to user - they need to manually enable sound
+        setShowSoundPrompt(true);
+        setSoundPlaying(false);
       }
     };
     
     // Start playing immediately
     playAlarmSound();
     
-    // Also add interaction listener for immediate user action
-    const handleInteraction = async () => {
-      if (!soundPlaying) {
-        console.log('[AlarmRinging] User interaction detected, forcing sound play');
-        try {
-          await alarmSounds.playSound(sound as SoundType, 300000);
-          setSoundPlaying(true);
-          setShowSoundPrompt(false);
-          console.log('[AlarmRinging] ✅ Sound playing after user interaction');
-        } catch (error) {
-          console.error('[AlarmRinging] ❌ Sound failed even after user interaction:', error);
-        }
-      }
-    };
-    
-    // Listen for ANY user interaction
-    document.addEventListener('click', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
-    document.addEventListener('touchend', handleInteraction);
-    document.addEventListener('keydown', handleInteraction);
-    
     // Cleanup - stop sound when component unmounts
     return () => {
       console.log('[AlarmRinging] Component unmounting, stopping sound');
       alarmSounds.stopSound();
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
-      document.removeEventListener('touchend', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
     };
-  }, [sound]); // Only re-run if sound changes, NOT when soundPlaying changes
+  }, [sound]); // Only re-run if sound type changes
+
+  // Manual sound enable handler (only called when user clicks the button)
+  const handleEnableSound = async () => {
+    console.log('[AlarmRinging] User manually enabling sound');
+    try {
+      await alarmSounds.playSound(sound as SoundType, 300000);
+      setSoundPlaying(true);
+      setShowSoundPrompt(false);
+      console.log('[AlarmRinging] ✅ Sound enabled successfully');
+    } catch (error) {
+      console.error('[AlarmRinging] ❌ Manual sound enable failed:', error);
+      // Keep showing the prompt
+    }
+  };
 
   const formattedTime = currentTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -121,10 +107,16 @@ export function AlarmRinging({
         `}</style>
 
         <div className="alarm-vibrate text-center space-y-6">
-          {/* Sound prompt banner */}
+          {/* Sound prompt banner with button */}
           {showSoundPrompt && (
-            <div className="bg-yellow-500 text-black px-4 py-3 rounded-lg font-bold animate-pulse">
-              🔊 Tap anywhere to enable sound!
+            <div className="bg-yellow-500 text-black px-4 py-3 rounded-lg space-y-2">
+              <p className="font-bold">🔊 Sound blocked by browser!</p>
+              <Button
+                onClick={handleEnableSound}
+                className="bg-black text-yellow-500 hover:bg-gray-800 font-bold w-full"
+              >
+                Click to Enable Sound
+              </Button>
             </div>
           )}
           
