@@ -22,9 +22,8 @@ const actionMap: Record<string, { action: string; feature: string }> = {
   "PATCH:/api/tasks/uncomplete": { action: "task_uncompleted", feature: "planner" },
   
   // Focus Sessions
-  "POST:/api/focus": { action: "focus_started", feature: "focus" },
-  "PUT:/api/focus": { action: "focus_completed", feature: "focus" },
-  "PATCH:/api/focus/pause": { action: "focus_paused", feature: "focus" },
+  "POST:/api/focus-sessions": { action: "focus_started", feature: "focus" },
+  "PATCH:/api/focus-sessions": { action: "focus_completed", feature: "focus" },
   
   // Notes
   "POST:/api/notes": { action: "note_created", feature: "notes" },
