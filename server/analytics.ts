@@ -1,6 +1,18 @@
 import { db } from "../db";
-import { activityLog, dailyMetrics, userStats, focusSessions, tasks, users } from "@shared/schema";
+import { userStats, focusSessions, tasks, users } from "@shared/schema";
 import { sql, desc, eq, and, gte, lte, count } from "drizzle-orm";
+
+// Temporary: Define activityLog and dailyMetrics tables inline to avoid schema conflicts
+// TODO: Remove after migration is run manually
+const activityLog = {
+  userId: { name: 'userId' },
+  action: { name: 'action' },
+  feature: { name: 'feature' },
+  timestamp: { name: 'timestamp' },
+  id: { name: 'id' }
+} as any;
+
+const dailyMetrics = {} as any;
 
 // Helper to format date as YYYY-MM-DD
 function formatDate(date: Date): string {

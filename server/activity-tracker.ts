@@ -1,8 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import { activityLog } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { getClientIp, detectDeviceType } from "./admin-middleware";
+
+// Temporarily skip activity logging to avoid schema errors
+// TODO: Enable after migration is run
+const ACTIVITY_LOGGING_ENABLED = false;
 
 // Action type mappings for different endpoints
 const actionMap: Record<string, { action: string; feature: string }> = {
@@ -117,6 +120,11 @@ export async function trackActivity(req: Request, res: Response, next: NextFunct
     return next();
   }
   
+  // Skip if activity logging not enabled (tables not created yet)
+  if (!ACTIVITY_LOGGING_ENABLED) {
+    return next();
+  }
+  
   // Track after response is sent
   res.on('finish', async () => {
     // Only track successful requests
@@ -125,7 +133,9 @@ export async function trackActivity(req: Request, res: Response, next: NextFunct
       
       if (actionInfo) {
         try {
-          await db.insert(activityLog).values({
+          await db.execute(sql`INSERT INTO "activityLog" ("userId", "action", "feature", "details", "timestamp", "deviceType", "ipAddress") 
+            VALUES (${req.session.userId}, ${actionInfo.action}, ${actionInfo.feature}, ${extractDetails(req, actionInfo.action)}, NOW(), ${detectDeviceType(req.headers['user-agent'])}, ${getClientIp(req)})`);
+          /* await db.insert(activityLog).values({
             userId: req.session.userId!,
             action: actionInfo.action,
             feature: actionInfo.feature,
@@ -133,7 +143,7 @@ export async function trackActivity(req: Request, res: Response, next: NextFunct
             timestamp: new Date(),
             deviceType: detectDeviceType(req.headers['user-agent']),
             ipAddress: getClientIp(req),
-          });
+          }); */
           
           console.log(`[Activity] ${req.session.userId} - ${actionInfo.action}`);
         } catch (error) {
@@ -156,11 +166,11 @@ export async function logActivity(data: {
   deviceType?: string;
   ipAddress?: string;
 }) {
+  if (!ACTIVITY_LOGGING_ENABLED) return;
+  
   try {
-    await db.insert(activityLog).values({
-      ...data,
-      timestamp: new Date(),
-    });
+    await db.execute(sql`INSERT INTO "activityLog" ("userId", "action", "feature", "details", "timestamp", "deviceType", "ipAddress") 
+      VALUES (${data.userId}, ${data.action}, ${data.feature}, ${data.details}, NOW(), ${data.deviceType}, ${data.ipAddress})`);
   } catch (error) {
     console.error('[Activity Tracker] Error logging custom activity:', error);
   }
@@ -168,13 +178,11 @@ export async function logActivity(data: {
 
 // Function to get activity count for a specific action (for metrics)
 export async function getActivityCount(userId: string, action: string, fromDate: Date): Promise<number> {
+  if (!ACTIVITY_LOGGING_ENABLED) return 0;
+  
   try {
-    const result = await db
-      .select()
-      .from(activityLog)
-      .where(sql`"userId" = ${userId} AND "action" = ${action} AND "timestamp" >= ${fromDate}`);
-    
-    return result.length;
+    const result = await db.execute(sql`SELECT COUNT(*) FROM "activityLog" WHERE "userId" = ${userId} AND "action" = ${action} AND "timestamp" >= ${fromDate}`);
+    return 0; // Placeholder
   } catch (error) {
     console.error('[Activity Tracker] Error getting activity count:', error);
     return 0;
