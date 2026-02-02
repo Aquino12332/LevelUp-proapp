@@ -99,8 +99,8 @@ export default function Social() {
 
       // Sort by XP and assign ranks
       return globalUsers
-        .sort((a, b) => b.xp - a.xp)
-        .map((user, idx) => ({ ...user, rank: idx + 1 }));
+        .sort((a: any, b: any) => b.xp - a.xp)
+        .map((user: any, idx: number) => ({ ...user, rank: idx + 1 }));
     }
   }, [leaderboardView, friends, stats, globalLeaderboardData]);
 
@@ -234,7 +234,7 @@ export default function Social() {
                  <p className="font-medium">Loading global rankings...</p>
                </div>
              ) : leaderboard.length > 0 ? (
-               leaderboard.map((user) => (
+               leaderboard.map((user: any) => (
                  <div 
                    key={user.id}
                    className={`flex items-center p-4 border-b last:border-0 hover:bg-muted/50 transition-colors ${user.isUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}`}

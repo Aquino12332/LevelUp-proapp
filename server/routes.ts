@@ -203,7 +203,7 @@ export async function registerRoutes(
       }
 
       // Verify password
-      const isValid = await bcrypt.compare(password, user.password);
+      const isValid = await bcrypt.compare(password, user.password || "");
       if (!isValid) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
@@ -331,7 +331,7 @@ export async function registerRoutes(
       await storage.updateUser(user.id, {
         resetToken,
         resetTokenExpiry,
-      });
+      } as any);
 
       // Send email
       const emailSent = await sendPasswordResetEmail(email, resetToken, user.username);

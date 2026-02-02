@@ -47,7 +47,7 @@ export const offlineAlarms = {
   },
 
   // Delete an alarm
-  delete(alarmId: number): void {
+  delete(alarmId: string): void {
     const alarms = this.getAll();
     const filtered = alarms.filter(a => a.id !== alarmId);
     this.saveAll(filtered);
@@ -55,7 +55,7 @@ export const offlineAlarms = {
   },
 
   // Get a specific alarm
-  get(alarmId: number): Alarm | null {
+  get(alarmId: string): Alarm | null {
     const alarms = this.getAll();
     return alarms.find(a => a.id === alarmId) || null;
   },

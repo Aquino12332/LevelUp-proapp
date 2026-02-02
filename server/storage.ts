@@ -151,7 +151,13 @@ export class MemStorage implements IStorage {
       provider: insertUser.provider ?? "local",
       providerId: insertUser.providerId ?? null,
       avatar: insertUser.avatar ?? null,
+      resetToken: null,
+      resetTokenExpiry: null,
       createdAt: now,
+      lastLoginAt: null,
+      lastLogoutAt: null,
+      isOnline: false,
+      deviceType: null,
     };
     this.users.set(id, user);
     return user;

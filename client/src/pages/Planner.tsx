@@ -636,7 +636,7 @@ export default function Planner() {
                             <BellRing className="h-3.5 w-3.5 text-primary animate-pulse" />
                           )}
                           {task.isRecurring && (
-                            <Repeat className="h-3.5 w-3.5 text-blue-500" title="Recurring task" />
+                            <Repeat className="h-3.5 w-3.5 text-blue-500" />
                           )}
                           <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase", getCategoryColor(task.category))}>
                             {task.category}

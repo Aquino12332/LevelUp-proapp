@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
 
 export default function AdminLogin() {
-  const [, setLocation] = useNavigate();
+  const [, setLocation] = useLocation();
   const [adminSecret, setAdminSecret] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

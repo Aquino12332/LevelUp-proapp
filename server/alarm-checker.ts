@@ -63,14 +63,14 @@ async function processTriggeredAlarm(alarm: any): Promise<void> {
       icon: "/favicon.png",
       badge: "/favicon.png",
       tag: `alarm-${alarm.id}`,
-      requireInteraction: true,
       data: {
         alarmId: alarm.id,
         type: "alarm",
         url: "/alarm",
         time: alarm.time,
         sound: alarm.sound,
-        label: alarm.label
+        label: alarm.label,
+        requireInteraction: true
       }
     });
     
