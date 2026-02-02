@@ -183,8 +183,9 @@ export const userSessions = pgTable("userSessions", {
   sessionStartIdx: index("userSessions_sessionStart_idx").on(table.sessionStart),
 }));
 
+// TEMPORARILY COMMENTED OUT - Uncomment after running manual migration in Neon
 // Activity log table for detailed user action tracking
-export const activityLog = pgTable("activityLog", {
+/* export const activityLog = pgTable("activityLog", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("userId").notNull(),
   action: varchar("action").notNull(), // 'login', 'logout', 'task_completed', 'focus_started', etc.
@@ -216,7 +217,7 @@ export const dailyMetrics = pgTable("dailyMetrics", {
   dateIdx: index("dailyMetrics_date_idx").on(table.date),
   userIdIdx: index("dailyMetrics_userId_idx").on(table.userId),
   dateUserIdx: index("dailyMetrics_date_userId_idx").on(table.date, table.userId),
-}));
+})); */
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -336,7 +337,8 @@ export const insertUserSessionSchema = createInsertSchema(userSessions).pick({
   ipAddress: true,
 });
 
-export const insertActivityLogSchema = createInsertSchema(activityLog).pick({
+// TEMPORARILY COMMENTED OUT - Uncomment after migration
+/* export const insertActivityLogSchema = createInsertSchema(activityLog).pick({
   userId: true,
   action: true,
   feature: true,
@@ -356,7 +358,7 @@ export const insertDailyMetricsSchema = createInsertSchema(dailyMetrics).pick({
   notesCreated: true,
   loginCount: true,
   sessionDuration: true,
-});
+}); */
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -381,7 +383,8 @@ export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 export type UserSession = typeof userSessions.$inferSelect;
-export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+// TEMPORARILY COMMENTED OUT - Uncomment after migration
+/* export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type InsertDailyMetrics = z.infer<typeof insertDailyMetricsSchema>;
-export type DailyMetrics = typeof dailyMetrics.$inferSelect;
+export type DailyMetrics = typeof dailyMetrics.$inferSelect; */
