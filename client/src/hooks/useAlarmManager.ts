@@ -235,25 +235,39 @@ export function useAlarmManager() {
   // Dismiss alarm
   const dismissAlarm = useCallback(
     async () => {
-      if (!activeAlarm) return;
+      console.log('[Dismiss] 🛑 Dismiss button clicked');
+      if (!activeAlarm) {
+        console.log('[Dismiss] ❌ No active alarm to dismiss');
+        return;
+      }
 
+      console.log('[Dismiss] Dismissing alarm:', activeAlarm.label);
       try {
+        console.log('[Dismiss] Stopping sound...');
         alarmSounds.stopSound();
         alarmStorage.dismissAlarm(activeAlarm.id);
 
+        console.log('[Dismiss] Sending dismiss request to server...');
         const response = await fetch(`/api/alarms/${activeAlarm.id}/dismiss`, {
           method: "POST",
         });
 
         if (response.ok) {
+          console.log('[Dismiss] ✅ Alarm dismissed successfully, clearing modal');
           setActiveAlarm(null);
           toast({
             title: "Dismissed",
             description: "Alarm dismissed",
           });
+        } else {
+          console.error('[Dismiss] ❌ Server returned error:', response.status);
+          // Dismiss anyway locally
+          setActiveAlarm(null);
         }
       } catch (error) {
-        console.error("Failed to dismiss alarm:", error);
+        console.error("[Dismiss] ❌ Failed to dismiss alarm:", error);
+        // Force dismiss locally even if server fails
+        setActiveAlarm(null);
       }
     },
     [activeAlarm, toast]
