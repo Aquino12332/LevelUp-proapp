@@ -165,7 +165,7 @@ export function getAPIPerformance() {
 export async function getLoadMetrics() {
   try {
     // Get online users
-    const onlineUsers = await db.select().from(users).where(sql`"isOnline" = true`);
+    const onlineUsers = await db.select().from(users).where(eq(users.isOnline, true));
     
     return {
       currentLoad: {
@@ -316,5 +316,5 @@ function getSlowQueries(): Array<{ query: string; time: number; count: number }>
   return Object.values(slowEndpoints).slice(0, 5);
 }
 
-// Import sql for database queries
-import { sql } from "drizzle-orm";
+// Import eq for database queries
+import { eq } from "drizzle-orm";
