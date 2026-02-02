@@ -183,8 +183,8 @@ export const userSessions = pgTable("userSessions", {
   sessionStartIdx: index("userSessions_sessionStart_idx").on(table.sessionStart),
 }));
 
-// TEMPORARILY COMMENTED - causes build errors, tables exist in DB
-/* export const activityLog = pgTable("activityLog", {
+// Activity log table for tracking user actions
+export const activityLog = pgTable("activityLog", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("userId").notNull(),
   action: varchar("action").notNull(), // 'login', 'logout', 'task_completed', 'focus_started', etc.
@@ -204,19 +204,19 @@ export const dailyMetrics = pgTable("dailyMetrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   date: varchar("date").notNull(), // YYYY-MM-DD format
   userId: varchar("userId"), // NULL for global metrics
-  totalStudyTime: integer("totalStudyTime").default(0), // minutes
-  focusSessions: integer("focusSessions").default(0),
-  tasksCompleted: integer("tasksCompleted").default(0),
-  tasksCreated: integer("tasksCreated").default(0),
-  notesCreated: integer("notesCreated").default(0),
-  loginCount: integer("loginCount").default(0),
-  sessionDuration: integer("sessionDuration").default(0), // total app time in minutes
+  totalStudyTime: varchar("totalStudyTime").default("0"), // minutes (changed to varchar for consistency)
+  focusSessions: varchar("focusSessions").default("0"),
+  tasksCompleted: varchar("tasksCompleted").default("0"),
+  tasksCreated: varchar("tasksCreated").default("0"),
+  notesCreated: varchar("notesCreated").default("0"),
+  loginCount: varchar("loginCount").default("0"),
+  sessionDuration: varchar("sessionDuration").default("0"), // total app time in minutes
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 }, (table) => ({
   dateIdx: index("dailyMetrics_date_idx").on(table.date),
   userIdIdx: index("dailyMetrics_userId_idx").on(table.userId),
   dateUserIdx: index("dailyMetrics_date_userId_idx").on(table.date, table.userId),
-})); */
+}));
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -336,7 +336,7 @@ export const insertUserSessionSchema = createInsertSchema(userSessions).pick({
   ipAddress: true,
 });
 
-/* export const insertActivityLogSchema = createInsertSchema(activityLog).pick({
+export const insertActivityLogSchema = createInsertSchema(activityLog).pick({
   userId: true,
   action: true,
   feature: true,
@@ -356,7 +356,7 @@ export const insertDailyMetricsSchema = createInsertSchema(dailyMetrics).pick({
   notesCreated: true,
   loginCount: true,
   sessionDuration: true,
-}); */
+});
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -381,7 +381,7 @@ export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 export type UserSession = typeof userSessions.$inferSelect;
-/* export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type InsertDailyMetrics = z.infer<typeof insertDailyMetricsSchema>;
-export type DailyMetrics = typeof dailyMetrics.$inferSelect; */
+export type DailyMetrics = typeof dailyMetrics.$inferSelect;
