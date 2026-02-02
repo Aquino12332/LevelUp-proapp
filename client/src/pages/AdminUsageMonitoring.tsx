@@ -43,7 +43,11 @@ export default function AdminUsageMonitoring() {
         fetch(`/api/admin/analytics/student-usage?range=${timeRange}`, { headers }),
       ]);
 
-      if (!overviewRes.ok) throw new Error('Failed to fetch data');
+      if (!overviewRes.ok) {
+        const errorText = await overviewRes.text();
+        console.error('API Error:', overviewRes.status, errorText);
+        throw new Error(`Failed to fetch data: ${overviewRes.status}`);
+      }
 
       const overviewData = await overviewRes.json();
       const trendData = await trendRes.json();
@@ -54,10 +58,11 @@ export default function AdminUsageMonitoring() {
       setStudyTimeTrend(trendData);
       setPeakHours(hoursData);
       setStudentUsage(studentsData);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Analytics fetch error:', error);
       toast({
         title: "Error",
-        description: "Failed to load analytics data",
+        description: error.message || "Failed to load analytics data",
         variant: "destructive",
       });
     } finally {

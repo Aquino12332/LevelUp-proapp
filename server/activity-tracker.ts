@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../db";
+import { activityLog } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { getClientIp, detectDeviceType } from "./admin-middleware";
 
-// Temporarily skip activity logging to avoid schema errors
-// TODO: Enable after migration is run
-const ACTIVITY_LOGGING_ENABLED = false;
+// Activity logging is now enabled - tables created in database
+const ACTIVITY_LOGGING_ENABLED = true;
 
 // Action type mappings for different endpoints
 const actionMap: Record<string, { action: string; feature: string }> = {
@@ -133,9 +133,7 @@ export async function trackActivity(req: Request, res: Response, next: NextFunct
       
       if (actionInfo) {
         try {
-          await db.execute(sql`INSERT INTO "activityLog" ("userId", "action", "feature", "details", "timestamp", "deviceType", "ipAddress") 
-            VALUES (${req.session.userId}, ${actionInfo.action}, ${actionInfo.feature}, ${extractDetails(req, actionInfo.action)}, NOW(), ${detectDeviceType(req.headers['user-agent'])}, ${getClientIp(req)})`);
-          /* await db.insert(activityLog).values({
+          await db.insert(activityLog).values({
             userId: req.session.userId!,
             action: actionInfo.action,
             feature: actionInfo.feature,
@@ -143,7 +141,7 @@ export async function trackActivity(req: Request, res: Response, next: NextFunct
             timestamp: new Date(),
             deviceType: detectDeviceType(req.headers['user-agent']),
             ipAddress: getClientIp(req),
-          }); */
+          });
           
           console.log(`[Activity] ${req.session.userId} - ${actionInfo.action}`);
         } catch (error) {
@@ -169,8 +167,10 @@ export async function logActivity(data: {
   if (!ACTIVITY_LOGGING_ENABLED) return;
   
   try {
-    await db.execute(sql`INSERT INTO "activityLog" ("userId", "action", "feature", "details", "timestamp", "deviceType", "ipAddress") 
-      VALUES (${data.userId}, ${data.action}, ${data.feature}, ${data.details}, NOW(), ${data.deviceType}, ${data.ipAddress})`);
+    await db.insert(activityLog).values({
+      ...data,
+      timestamp: new Date(),
+    });
   } catch (error) {
     console.error('[Activity Tracker] Error logging custom activity:', error);
   }
@@ -181,8 +181,12 @@ export async function getActivityCount(userId: string, action: string, fromDate:
   if (!ACTIVITY_LOGGING_ENABLED) return 0;
   
   try {
-    const result = await db.execute(sql`SELECT COUNT(*) FROM "activityLog" WHERE "userId" = ${userId} AND "action" = ${action} AND "timestamp" >= ${fromDate}`);
-    return 0; // Placeholder
+    const result = await db
+      .select()
+      .from(activityLog)
+      .where(sql`"userId" = ${userId} AND "action" = ${action} AND "timestamp" >= ${fromDate}`);
+    
+    return result.length;
   } catch (error) {
     console.error('[Activity Tracker] Error getting activity count:', error);
     return 0;
