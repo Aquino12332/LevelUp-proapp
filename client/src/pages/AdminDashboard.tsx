@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   UserCheck, 
@@ -18,9 +19,13 @@ import {
   Search,
   Key,
   Clock,
-  TrendingUp
+  TrendingUp,
+  BarChart3,
+  Server
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import AdminUsageMonitoring from "./AdminUsageMonitoring";
+import AdminSystemHealth from "./AdminSystemHealth";
 
 type UserWithStats = {
   id: string;
@@ -192,9 +197,31 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Usage</span>
+            </TabsTrigger>
+            <TabsTrigger value="health" className="flex items-center gap-2">
+              <Server className="w-4 h-4" />
+              <span className="hidden sm:inline">Health</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -240,8 +267,8 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Device Breakdown */}
-        <Card>
+            {/* Device Breakdown */}
+            <Card>
           <CardHeader>
             <CardTitle>Device Usage</CardTitle>
             <CardDescription>Distribution of devices used by students</CardDescription>
@@ -257,10 +284,12 @@ export default function AdminDashboard() {
               ))}
             </div>
           </CardContent>
-        </Card>
+            </Card>
+          </TabsContent>
 
-        {/* Users Table */}
-        <Card>
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
           <CardHeader>
             <CardTitle>All Students</CardTitle>
             <CardDescription>Manage student accounts and track activity</CardDescription>
@@ -343,7 +372,19 @@ export default function AdminDashboard() {
               </table>
             </div>
           </CardContent>
-        </Card>
+            </Card>
+          </TabsContent>
+
+          {/* Usage Monitoring Tab */}
+          <TabsContent value="analytics">
+            <AdminUsageMonitoring />
+          </TabsContent>
+
+          {/* System Health Tab */}
+          <TabsContent value="health">
+            <AdminSystemHealth />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Reset Password Dialog */}
