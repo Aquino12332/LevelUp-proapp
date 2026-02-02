@@ -108,7 +108,7 @@ export function AlarmRinging({
         console.log('[AlarmRinging] 📳 Vibration stopped');
       }
     };
-  }, [sound]); // Only re-run if sound type changes
+  }, []); // Empty array - only run once on mount, cleanup on unmount
 
   // Manual sound enable handler (only called when user clicks the button)
   const handleEnableSound = async () => {
