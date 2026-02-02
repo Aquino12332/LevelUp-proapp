@@ -13,6 +13,24 @@ import crypto from "crypto";
 import { sendPasswordResetEmail, sendPasswordChangedEmail } from "./email";
 import { generateNoteSummary } from "./ai";
 import { trackUserActivity, requireAdmin, detectDeviceType, getClientIp } from "./admin-middleware";
+import { trackActivity } from "./activity-tracker";
+import { 
+  getOverviewMetrics, 
+  getStudyTimeTrend, 
+  getPeakUsageHours, 
+  getDailyActiveUsers,
+  getStudentUsageList,
+  getStudentDetail,
+  exportToCSV 
+} from "./analytics";
+import {
+  trackAPIMetric,
+  getServerMetrics,
+  getDatabaseHealth,
+  getAPIPerformance,
+  getLoadMetrics,
+  getSystemAlerts
+} from "./system-health";
 
 // Extend Express Session type
 declare module 'express-session' {
@@ -46,8 +64,29 @@ export async function registerRoutes(
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Track API performance metrics
+  app.use((req, res, next) => {
+    const startTime = Date.now();
+    
+    res.on('finish', () => {
+      const duration = Date.now() - startTime;
+      trackAPIMetric({
+        path: req.path,
+        method: req.method,
+        duration,
+        statusCode: res.statusCode,
+        timestamp: new Date()
+      });
+    });
+    
+    next();
+  });
+
   // Track user activity on all API requests
   app.use("/api", trackUserActivity);
+  
+  // Track detailed activity logs
+  app.use("/api", trackActivity);
 
   // Passport serialization
   passport.serializeUser((user: any, done) => {
@@ -1506,6 +1545,230 @@ export async function registerRoutes(
     } catch (error) {
       console.error("❌ Admin password reset error:", error);
       res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  // Analytics endpoints
+  app.get("/api/admin/analytics/overview", requireAdmin, async (req, res) => {
+    try {
+      const { from, to, range } = req.query;
+      
+      let fromDate: Date, toDate: Date;
+      
+      if (range && typeof range === 'string') {
+        // Use preset range
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        switch (range) {
+          case 'today':
+            fromDate = today;
+            toDate = now;
+            break;
+          case 'week':
+            fromDate = new Date(today);
+            fromDate.setDate(fromDate.getDate() - 7);
+            toDate = now;
+            break;
+          case 'month':
+            fromDate = new Date(today);
+            fromDate.setMonth(fromDate.getMonth() - 1);
+            toDate = now;
+            break;
+          default:
+            fromDate = today;
+            toDate = now;
+        }
+      } else if (from && to) {
+        // Use custom range
+        fromDate = new Date(from as string);
+        toDate = new Date(to as string);
+      } else {
+        // Default to today
+        const now = new Date();
+        fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        toDate = now;
+      }
+      
+      const metrics = await getOverviewMetrics(fromDate, toDate);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Failed to get overview metrics:", error);
+      res.status(500).json({ error: "Failed to get overview metrics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/study-time-trend", requireAdmin, async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      const trend = await getStudyTimeTrend(fromDate, toDate);
+      res.json(trend);
+    } catch (error) {
+      console.error("Failed to get study time trend:", error);
+      res.status(500).json({ error: "Failed to get study time trend" });
+    }
+  });
+
+  app.get("/api/admin/analytics/peak-hours", requireAdmin, async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      const hours = await getPeakUsageHours(fromDate, toDate);
+      res.json(hours);
+    } catch (error) {
+      console.error("Failed to get peak usage hours:", error);
+      res.status(500).json({ error: "Failed to get peak usage hours" });
+    }
+  });
+
+  app.get("/api/admin/analytics/daily-active-users", requireAdmin, async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      const dau = await getDailyActiveUsers(fromDate, toDate);
+      res.json(dau);
+    } catch (error) {
+      console.error("Failed to get daily active users:", error);
+      res.status(500).json({ error: "Failed to get daily active users" });
+    }
+  });
+
+  app.get("/api/admin/analytics/student-usage", requireAdmin, async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      const students = await getStudentUsageList(fromDate, toDate);
+      res.json(students);
+    } catch (error) {
+      console.error("Failed to get student usage:", error);
+      res.status(500).json({ error: "Failed to get student usage" });
+    }
+  });
+
+  app.get("/api/admin/analytics/student/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      const detail = await getStudentDetail(userId, fromDate, toDate);
+      res.json(detail);
+    } catch (error) {
+      console.error("Failed to get student detail:", error);
+      res.status(500).json({ error: "Failed to get student detail" });
+    }
+  });
+
+  app.get("/api/admin/analytics/export", requireAdmin, async (req, res) => {
+    try {
+      const { type, from, to } = req.query;
+      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const toDate = to ? new Date(to as string) : new Date();
+      
+      let data: any[] = [];
+      let filename = 'export.csv';
+      
+      if (type === 'students') {
+        data = await getStudentUsageList(fromDate, toDate);
+        filename = 'student-usage.csv';
+      } else if (type === 'study-time') {
+        data = await getStudyTimeTrend(fromDate, toDate);
+        filename = 'study-time-trend.csv';
+      } else if (type === 'dau') {
+        data = await getDailyActiveUsers(fromDate, toDate);
+        filename = 'daily-active-users.csv';
+      }
+      
+      const csv = exportToCSV(data, filename);
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("Failed to export data:", error);
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // System Health endpoints
+  app.get("/api/admin/health", requireAdmin, async (req, res) => {
+    try {
+      const server = getServerMetrics();
+      const database = await getDatabaseHealth();
+      const api = getAPIPerformance();
+      const load = await getLoadMetrics();
+      const alerts = getSystemAlerts();
+      
+      res.json({
+        server,
+        database,
+        api,
+        load,
+        alerts
+      });
+    } catch (error) {
+      console.error("Failed to get system health:", error);
+      res.status(500).json({ error: "Failed to get system health" });
+    }
+  });
+
+  app.get("/api/admin/health/server", requireAdmin, async (req, res) => {
+    try {
+      const metrics = getServerMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Failed to get server metrics:", error);
+      res.status(500).json({ error: "Failed to get server metrics" });
+    }
+  });
+
+  app.get("/api/admin/health/database", requireAdmin, async (req, res) => {
+    try {
+      const health = await getDatabaseHealth();
+      res.json(health);
+    } catch (error) {
+      console.error("Failed to get database health:", error);
+      res.status(500).json({ error: "Failed to get database health" });
+    }
+  });
+
+  app.get("/api/admin/health/api-performance", requireAdmin, async (req, res) => {
+    try {
+      const performance = getAPIPerformance();
+      res.json(performance);
+    } catch (error) {
+      console.error("Failed to get API performance:", error);
+      res.status(500).json({ error: "Failed to get API performance" });
+    }
+  });
+
+  app.get("/api/admin/health/load", requireAdmin, async (req, res) => {
+    try {
+      const load = await getLoadMetrics();
+      res.json(load);
+    } catch (error) {
+      console.error("Failed to get load metrics:", error);
+      res.status(500).json({ error: "Failed to get load metrics" });
+    }
+  });
+
+  app.get("/api/admin/health/alerts", requireAdmin, async (req, res) => {
+    try {
+      const alerts = getSystemAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Failed to get system alerts:", error);
+      res.status(500).json({ error: "Failed to get system alerts" });
     }
   });
 
