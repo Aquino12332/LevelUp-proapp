@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { Alarm } from "@shared/schema";
 import { alarmSounds, type SoundType } from "@/lib/alarmSounds";
 import { alarmStorage } from "@/lib/alarmStorage";
+import { offlineAlarms } from "@/lib/offlineAlarms";
 import { useToast } from "./use-toast";
 import { useAuth } from "./useAuth";
 
@@ -19,20 +20,37 @@ export function useAlarmManager() {
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { toast } = useToast();
 
-  // Fetch alarms from server
+  // Fetch alarms from server or offline storage
   const fetchAlarms = useCallback(async () => {
     try {
+      // Try to fetch from server first
       const response = await fetch(`/api/alarms?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
         setAlarms(data);
+        // Save to offline storage for future use
+        offlineAlarms.syncFromServer(data);
+        console.log('[AlarmManager] 🌐 Fetched', data.length, 'alarms from server');
+      } else {
+        throw new Error('Server responded with error');
       }
     } catch (error) {
-      console.error("Failed to fetch alarms:", error);
+      console.log('[AlarmManager] 📴 Server unavailable, loading offline alarms');
+      // Load from offline storage if server fails
+      const offlineData = offlineAlarms.getAll();
+      setAlarms(offlineData);
+      console.log('[AlarmManager] 💾 Loaded', offlineData.length, 'alarms from offline storage');
+      
+      if (offlineData.length === 0) {
+        toast({
+          title: "Offline Mode",
+          description: "No alarms found offline. Create alarms while online to use them offline.",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, toast]);
 
   // Trigger alarm
   const triggerAlarm = useCallback(
