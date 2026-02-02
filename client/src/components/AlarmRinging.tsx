@@ -131,8 +131,10 @@ export function AlarmRinging({
     hour12: true,
   });
 
+  console.log('[AlarmRinging] 🖼️  Rendering modal UI - soundPlaying:', soundPlaying, 'showSoundPrompt:', showSoundPrompt);
+  
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999]">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999]" style={{ position: 'fixed' }}>
       <div className="w-full max-w-md mx-auto p-6 bg-gradient-to-br from-red-900 via-red-800 to-red-900 rounded-2xl shadow-2xl">
         {/* Vibration animation */}
         <style>{`
@@ -212,13 +214,19 @@ export function AlarmRinging({
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={() => setShowSnoozeOptions(true)}
+                onClick={() => {
+                  console.log('[AlarmRinging] 🟡 SNOOZE BUTTON CLICKED');
+                  setShowSnoozeOptions(true);
+                }}
                 className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-lg py-6"
               >
                 Snooze
               </Button>
               <Button
-                onClick={onDismiss}
+                onClick={() => {
+                  console.log('[AlarmRinging] 🔴 DISMISS BUTTON CLICKED');
+                  onDismiss();
+                }}
                 className="bg-white/20 hover:bg-white/30 text-white font-bold text-lg py-6 flex items-center justify-center gap-2"
               >
                 <X className="w-5 h-5" />
