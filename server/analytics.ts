@@ -42,7 +42,7 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
     // Get all users
     const allUsers = await db.select().from(users);
     const totalUsers = allUsers.length;
-    const onlineUsers = allUsers.filter(u => u.isOnline).length;
+    const onlineUsers = allUsers.filter(u => u.isOnline).length || 0;
     
     // Check if activityLog table exists, if not return basic data
     let activeUsers: any[] = [];
@@ -134,7 +134,7 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
       featureUsage: featureUsage.map(f => ({
         feature: f.feature || 'unknown',
         count: Number(f.count),
-        percentage: Math.round((Number(f.count) / activeToday) * 100)
+        percentage: activeToday > 0 ? Math.round((Number(f.count) / activeToday) * 100) : 0
       })),
       deviceBreakdown: Object.fromEntries(
         deviceBreakdown.map(d => [d.device || 'unknown', Number(d.count)])
@@ -142,7 +142,18 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
     };
   } catch (error) {
     console.error('Error getting overview metrics:', error);
-    throw error;
+    // Return default data instead of throwing
+    return {
+      totalUsers: 0,
+      onlineUsers: 0,
+      activeToday: 0,
+      totalStudyTime: 0,
+      totalSessions: 0,
+      averageSessionDuration: 0,
+      tasksCompleted: 0,
+      featureUsage: [],
+      deviceBreakdown: {}
+    };
   }
 }
 
@@ -174,7 +185,7 @@ export async function getStudyTimeTrend(fromDate: Date, toDate: Date) {
     return Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('Error getting study time trend:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -208,7 +219,11 @@ export async function getPeakUsageHours(fromDate: Date, toDate: Date) {
     return result;
   } catch (error) {
     console.error('Error getting peak usage hours:', error);
-    throw error;
+    return Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      count: 0,
+      label: `${hour}:00`
+    }));
   }
 }
 
@@ -244,7 +259,7 @@ export async function getDailyActiveUsers(fromDate: Date, toDate: Date) {
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('Error getting daily active users:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -298,7 +313,7 @@ export async function getStudentUsageList(fromDate: Date, toDate: Date) {
     return result.sort((a, b) => b.totalStudyTime - a.totalStudyTime);
   } catch (error) {
     console.error('Error getting student usage list:', error);
-    throw error;
+    return [];
   }
 }
 
