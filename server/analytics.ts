@@ -44,18 +44,23 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
     const totalUsers = allUsers.length;
     const onlineUsers = allUsers.filter(u => u.isOnline).length;
     
-    // Get active users in date range (users who logged in)
-    const activeUsers = await db
-      .select({ userId: activityLog.userId })
-      .from(activityLog)
-      .where(
-        and(
-          gte(activityLog.timestamp, fromDate),
-          lte(activityLog.timestamp, toDate),
-          eq(activityLog.action, 'login')
+    // Check if activityLog table exists, if not return basic data
+    let activeUsers: any[] = [];
+    try {
+      activeUsers = await db
+        .select({ userId: activityLog.userId })
+        .from(activityLog)
+        .where(
+          and(
+            gte(activityLog.timestamp, fromDate),
+            lte(activityLog.timestamp, toDate),
+            eq(activityLog.action, 'login')
+          )
         )
-      )
-      .groupBy(activityLog.userId);
+        .groupBy(activityLog.userId);
+    } catch (err) {
+      console.log('[Analytics] activityLog table not yet created, using fallback');
+    }
     
     const activeToday = activeUsers.length;
     
@@ -89,19 +94,24 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
     const tasksCompleted = tasksData.length;
     
     // Get feature usage
-    const featureUsage = await db
-      .select({
-        feature: activityLog.feature,
-        count: count(activityLog.id)
-      })
-      .from(activityLog)
-      .where(
-        and(
-          gte(activityLog.timestamp, fromDate),
-          lte(activityLog.timestamp, toDate)
+    let featureUsage: any[] = [];
+    try {
+      featureUsage = await db
+        .select({
+          feature: activityLog.feature,
+          count: count(activityLog.id)
+        })
+        .from(activityLog)
+        .where(
+          and(
+            gte(activityLog.timestamp, fromDate),
+            lte(activityLog.timestamp, toDate)
+          )
         )
-      )
-      .groupBy(activityLog.feature);
+        .groupBy(activityLog.feature);
+    } catch (err) {
+      console.log('[Analytics] Could not fetch feature usage');
+    }
     
     // Get device breakdown
     const deviceBreakdown = await db
