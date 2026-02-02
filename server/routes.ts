@@ -1455,10 +1455,15 @@ export async function registerRoutes(
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
       
-      // Remove sensitive data
+      // Consider users online if they were active in the last 5 minutes
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      
+      // Remove sensitive data and calculate online status
       const sanitizedUsers = usersWithStats.map(({ password, resetToken, resetTokenExpiry, ...user }) => ({
         ...user,
         stats: user.stats,
+        isOnline: user.lastLoginAt && new Date(user.lastLoginAt) > fiveMinutesAgo &&
+                  (!user.lastLogoutAt || new Date(user.lastLoginAt) > new Date(user.lastLogoutAt)),
       }));
       
       res.json(sanitizedUsers);
@@ -1483,7 +1488,13 @@ export async function registerRoutes(
       const allUsers = await storage.getAllUsersWithStats();
       
       const totalUsers = allUsers.length;
-      const onlineUsers = allUsers.filter(u => u.isOnline).length;
+      
+      // Consider users online if they were active in the last 5 minutes
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const onlineUsers = allUsers.filter(u => 
+        u.lastLoginAt && new Date(u.lastLoginAt) > fiveMinutesAgo &&
+        (!u.lastLogoutAt || new Date(u.lastLoginAt) > new Date(u.lastLogoutAt))
+      ).length;
       
       // Users active in last 24 hours
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
