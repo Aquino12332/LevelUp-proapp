@@ -75,7 +75,7 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
         )
       );
     
-    const totalStudyTime = focusData.reduce((sum, session) => sum + (session.duration || 0), 0);
+    const totalStudyTime = focusData.reduce((sum, session) => sum + (parseInt(session.duration) || 0), 0);
     const totalSessions = focusData.length;
     const averageSessionDuration = totalSessions > 0 ? Math.round(totalStudyTime / totalSessions) : 0;
     
@@ -177,7 +177,7 @@ export async function getStudyTimeTrend(fromDate: Date, toDate: Date) {
       if (!acc[date]) {
         acc[date] = { date, minutes: 0, sessions: 0 };
       }
-      acc[date].minutes += session.duration || 0;
+      acc[date].minutes += parseInt(session.duration) || 0;
       acc[date].sessions += 1;
       return acc;
     }, {} as Record<string, { date: string; minutes: number; sessions: number }>);
@@ -290,16 +290,23 @@ export async function getStudentUsageList(fromDate: Date, toDate: Date) {
     }, {} as Record<string, typeof focusSessions>);
     
     // Build student usage list
+    // Consider users online if they were active in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    
     const result = allUsers.map(user => {
       const stats = allStats.find(s => s.userId === user.id);
       const sessions = sessionsByUser[user.id] || [];
-      const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+      const totalMinutes = sessions.reduce((sum, s) => sum + (parseInt(s.duration) || 0), 0);
+      
+      // Calculate online status based on recent activity
+      const isOnline = user.lastLoginAt && new Date(user.lastLoginAt) > fiveMinutesAgo &&
+                       (!user.lastLogoutAt || new Date(user.lastLoginAt) > new Date(user.lastLogoutAt));
       
       return {
         userId: user.id,
         username: user.username,
         email: user.email,
-        isOnline: user.isOnline,
+        isOnline,
         lastLoginAt: user.lastLoginAt,
         deviceType: user.deviceType,
         totalStudyTime: totalMinutes,
@@ -353,7 +360,7 @@ export async function getStudentDetail(userId: string, fromDate: Date, toDate: D
         )
       );
     
-    const totalStudyTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const totalStudyTime = sessions.reduce((sum, s) => sum + (parseInt(s.duration) || 0), 0);
     
     // Get tasks
     const userTasks = await db
