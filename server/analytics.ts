@@ -70,8 +70,8 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
       .from(focusSessions)
       .where(
         and(
-          gte(focusSessions.startTime, fromDate),
-          lte(focusSessions.startTime, toDate)
+          gte(focusSessions.startedAt, fromDate),
+          lte(focusSessions.startedAt, toDate)
         )
       );
     
@@ -165,15 +165,15 @@ export async function getStudyTimeTrend(fromDate: Date, toDate: Date) {
       .from(focusSessions)
       .where(
         and(
-          gte(focusSessions.startTime, fromDate),
-          lte(focusSessions.startTime, toDate)
+          gte(focusSessions.startedAt, fromDate),
+          lte(focusSessions.startedAt, toDate)
         )
       )
-      .orderBy(focusSessions.startTime);
+      .orderBy(focusSessions.startedAt);
     
     // Group by date
     const grouped = sessions.reduce((acc, session) => {
-      const date = formatDate(new Date(session.startTime));
+      const date = formatDate(new Date(session.startedAt));
       if (!acc[date]) {
         acc[date] = { date, minutes: 0, sessions: 0 };
       }
@@ -270,18 +270,18 @@ export async function getStudentUsageList(fromDate: Date, toDate: Date) {
     const allStats = await db.select().from(userStats);
     
     // Get focus sessions for each user
-    const focusSessions = await db
+    const focusSessionsData = await db
       .select()
       .from(focusSessions)
       .where(
         and(
-          gte(focusSessions.startTime, fromDate),
-          lte(focusSessions.startTime, toDate)
+          gte(focusSessions.startedAt, fromDate),
+          lte(focusSessions.startedAt, toDate)
         )
       );
     
     // Group focus sessions by user
-    const sessionsByUser = focusSessions.reduce((acc, session) => {
+    const sessionsByUser = focusSessionsData.reduce((acc, session) => {
       if (!acc[session.userId]) {
         acc[session.userId] = [];
       }
@@ -348,8 +348,8 @@ export async function getStudentDetail(userId: string, fromDate: Date, toDate: D
       .where(
         and(
           eq(focusSessions.userId, userId),
-          gte(focusSessions.startTime, fromDate),
-          lte(focusSessions.startTime, toDate)
+          gte(focusSessions.startedAt, fromDate),
+          lte(focusSessions.startedAt, toDate)
         )
       );
     
