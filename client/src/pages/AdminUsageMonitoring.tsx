@@ -119,18 +119,19 @@ export default function AdminUsageMonitoring() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-0">
       {/* Header with filters */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Usage Monitoring</h2>
-          <p className="text-gray-600">Track student activity and engagement</p>
+          <h2 className="text-xl md:text-2xl font-bold">Usage Monitoring</h2>
+          <p className="text-sm md:text-base text-gray-600">Track student activity and engagement</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant={timeRange === 'today' ? 'default' : 'outline'}
             onClick={() => setTimeRange('today')}
             size="sm"
+            className="text-xs md:text-sm"
           >
             Today
           </Button>
@@ -138,6 +139,7 @@ export default function AdminUsageMonitoring() {
             variant={timeRange === 'week' ? 'default' : 'outline'}
             onClick={() => setTimeRange('week')}
             size="sm"
+            className="text-xs md:text-sm"
           >
             This Week
           </Button>
@@ -145,6 +147,7 @@ export default function AdminUsageMonitoring() {
             variant={timeRange === 'month' ? 'default' : 'outline'}
             onClick={() => setTimeRange('month')}
             size="sm"
+            className="text-xs md:text-sm"
           >
             This Month
           </Button>
@@ -153,25 +156,25 @@ export default function AdminUsageMonitoring() {
 
       {/* Metric Cards */}
       {overview && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Study Time</CardTitle>
-              <Clock className="w-4 h-4 text-gray-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Total Study Time</CardTitle>
+              <Clock className="w-4 h-4 text-gray-600 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatMinutes(overview.totalStudyTime)}</div>
+            <CardContent className="pt-2">
+              <div className="text-xl md:text-2xl font-bold">{formatMinutes(overview.totalStudyTime)}</div>
               <p className="text-xs text-gray-600 mt-1">Across all students</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Focus Sessions</CardTitle>
-              <Target className="w-4 h-4 text-gray-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Focus Sessions</CardTitle>
+              <Target className="w-4 h-4 text-gray-600 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.totalSessions}</div>
+            <CardContent className="pt-2">
+              <div className="text-xl md:text-2xl font-bold">{overview.totalSessions}</div>
               <p className="text-xs text-gray-600 mt-1">
                 Avg: {formatMinutes(overview.averageSessionDuration)}
               </p>
@@ -179,23 +182,23 @@ export default function AdminUsageMonitoring() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Tasks Completed</CardTitle>
-              <CheckCircle className="w-4 h-4 text-gray-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Tasks Completed</CardTitle>
+              <CheckCircle className="w-4 h-4 text-gray-600 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.tasksCompleted}</div>
+            <CardContent className="pt-2">
+              <div className="text-xl md:text-2xl font-bold">{overview.tasksCompleted}</div>
               <p className="text-xs text-gray-600 mt-1">This period</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Users className="w-4 h-4 text-gray-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">Active Users</CardTitle>
+              <Users className="w-4 h-4 text-gray-600 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{overview.activeToday}</div>
+            <CardContent className="pt-2">
+              <div className="text-xl md:text-2xl font-bold text-blue-600">{overview.activeToday}</div>
               <p className="text-xs text-gray-600 mt-1">
                 of {overview.totalUsers} total
               </p>
@@ -300,56 +303,56 @@ export default function AdminUsageMonitoring() {
       {/* Student Usage Table */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
-              <CardTitle>Student Activity</CardTitle>
-              <CardDescription>Individual student usage statistics</CardDescription>
+              <CardTitle className="text-base md:text-lg">Student Activity</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Individual student usage statistics</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => handleExport('students')}>
-              <Download className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => handleExport('students')} className="text-xs w-full md:w-auto">
+              <Download className="w-3 h-3 md:w-4 md:h-4 mr-2" />
               Export CSV
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-2 md:mx-0">
+            <table className="w-full min-w-[600px]">
               <thead className="border-b">
-                <tr className="text-left text-sm text-gray-600">
-                  <th className="pb-3 font-medium">Student</th>
-                  <th className="pb-3 font-medium">Study Time</th>
-                  <th className="pb-3 font-medium">Sessions</th>
-                  <th className="pb-3 font-medium">Tasks Done</th>
-                  <th className="pb-3 font-medium">Level</th>
-                  <th className="pb-3 font-medium">Status</th>
+                <tr className="text-left text-xs md:text-sm text-gray-600">
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Student</th>
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Study Time</th>
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Sessions</th>
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Tasks Done</th>
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Level</th>
+                  <th className="pb-2 md:pb-3 px-2 md:px-0 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {studentUsage.slice(0, 10).map((student) => (
-                  <tr key={student.userId} className="text-sm">
-                    <td className="py-3">
+                  <tr key={student.userId} className="text-xs md:text-sm">
+                    <td className="py-2 md:py-3 px-2 md:px-0">
                       <div>
-                        <div className="font-medium">{student.username}</div>
-                        <div className="text-xs text-gray-500">{student.email}</div>
+                        <div className="font-medium truncate max-w-[120px] md:max-w-none">{student.username}</div>
+                        <div className="text-[10px] md:text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">{student.email}</div>
                       </div>
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-2 md:py-3 px-2 md:px-0 text-gray-600 whitespace-nowrap">
                       {formatMinutes(student.totalStudyTime)}
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-2 md:py-3 px-2 md:px-0 text-gray-600">
                       {student.sessionCount}
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-2 md:py-3 px-2 md:px-0 text-gray-600">
                       {student.tasksCompleted}
                     </td>
-                    <td className="py-3">
-                      <Badge variant="outline">Level {student.level}</Badge>
+                    <td className="py-2 md:py-3 px-2 md:px-0">
+                      <Badge variant="outline" className="text-[10px] md:text-xs">Level {student.level}</Badge>
                     </td>
-                    <td className="py-3">
+                    <td className="py-2 md:py-3 px-2 md:px-0">
                       {student.isOnline ? (
-                        <Badge className="bg-green-100 text-green-800">Online</Badge>
+                        <Badge className="bg-green-100 text-green-800 text-[10px] md:text-xs">Online</Badge>
                       ) : (
-                        <Badge variant="secondary">Offline</Badge>
+                        <Badge variant="secondary" className="text-[10px] md:text-xs">Offline</Badge>
                       )}
                     </td>
                   </tr>
