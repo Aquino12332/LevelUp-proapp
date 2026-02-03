@@ -364,6 +364,13 @@ export default function SignIn() {
         <p className="text-center text-sm text-muted-foreground mt-4">
           By signing in, you agree to our Terms of Service and Privacy Policy.
         </p>
+        
+        <p className="text-center text-sm text-muted-foreground mt-2">
+          Are you an admin?{" "}
+          <a href="/admin/login" className="text-primary hover:underline font-medium">
+            Click here
+          </a>
+        </p>
       </div>
     </div>
   );
