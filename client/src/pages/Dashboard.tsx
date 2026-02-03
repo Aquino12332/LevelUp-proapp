@@ -38,13 +38,13 @@ export default function Dashboard() {
         if (response.ok) {
           const sessions = await response.json();
           const todaySessions = sessions.filter((s: any) => {
-            const sessionDate = new Date(s.startTime);
+            const sessionDate = new Date(s.startedAt);
             sessionDate.setHours(0, 0, 0, 0);
             return sessionDate.getTime() === today.getTime() && s.completed;
           });
           
           // Calculate total study time in hours
-          const totalMinutes = todaySessions.reduce((acc: number, s: any) => acc + (s.duration || 0), 0);
+          const totalMinutes = todaySessions.reduce((acc: number, s: any) => acc + (parseInt(s.duration) || 0), 0);
           const hours = totalMinutes / 60;
           
           setTodayStats({
