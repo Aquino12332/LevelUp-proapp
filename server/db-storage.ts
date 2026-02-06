@@ -137,7 +137,12 @@ export class DbStorage implements IStorage {
   }
 
   async createTask(userId: string, task: InsertTask): Promise<Task> {
-    const result = await db.insert(tasks).values({ ...task, userId }).returning();
+    const result = await db.insert(tasks).values({ 
+      ...task, 
+      userId,
+      dueSoonNotificationSent: false,
+      lastOverdueNotification: null,
+    }).returning();
     return result[0];
   }
 
