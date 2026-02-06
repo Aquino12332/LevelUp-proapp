@@ -137,11 +137,11 @@ export class DbStorage implements IStorage {
   }
 
   async createTask(userId: string, task: InsertTask): Promise<Task> {
+    // Don't include notification fields - they don't exist in database yet
+    // They'll be added via migration later
     const result = await db.insert(tasks).values({ 
       ...task, 
       userId,
-      dueSoonNotificationSent: false,
-      lastOverdueNotification: null,
     }).returning();
     return result[0];
   }
