@@ -12,8 +12,10 @@ export async function checkDueSoonTasks() {
     const allUsers = await db.select().from(users);
     
     for (const user of allUsers) {
-      // notificationPreferences field doesn't exist yet - use defaults
-      const prefs = { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
+      // Parse notification preferences (default to 1 hour)
+      const prefs = user.notificationPreferences ? 
+        JSON.parse(user.notificationPreferences as string) : 
+        { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
       
       if (!prefs.dueReminderMinutes) continue;
       
@@ -31,11 +33,10 @@ export async function checkDueSoonTasks() {
             eq(tasks.completed, false),
             gte(tasks.dueDate, reminderTime),
             lt(tasks.dueDate, windowEnd),
-            // Skip notification tracking until columns exist
-            // or(
-            //   isNull(tasks.dueSoonNotificationSent),
-            //   eq(tasks.dueSoonNotificationSent, false)
-            // )
+            or(
+              isNull(tasks.dueSoonNotificationSent),
+              eq(tasks.dueSoonNotificationSent, false)
+            )
           )
         );
       
@@ -43,11 +44,11 @@ export async function checkDueSoonTasks() {
       for (const task of dueSoonTasks) {
         await sendTaskNotification(user, task, 'due-soon', prefs.dueReminderMinutes);
         
-        // Mark notification as sent - DISABLED until column exists
-        // await db
-        //   .update(tasks)
-        //   .set({ dueSoonNotificationSent: true })
-        //   .where(eq(tasks.id, task.id));
+        // Mark notification as sent
+        await db
+          .update(tasks)
+          .set({ dueSoonNotificationSent: true })
+          .where(eq(tasks.id, task.id));
       }
     }
   } catch (error) {
@@ -65,8 +66,9 @@ export async function checkOverdueTasks() {
     const allUsers = await db.select().from(users);
     
     for (const user of allUsers) {
-      // notificationPreferences field doesn't exist yet - use defaults
-      const prefs = { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
+      const prefs = user.notificationPreferences ? 
+        JSON.parse(user.notificationPreferences as string) : 
+        { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
       
       if (!prefs.overdueEnabled) continue;
       
@@ -79,11 +81,10 @@ export async function checkOverdueTasks() {
             eq(tasks.userId, user.id),
             eq(tasks.completed, false),
             lt(tasks.dueDate, now),
-            // Skip notification tracking until columns exist
-            // or(
-            //   isNull(tasks.lastOverdueNotification),
-            //   lt(tasks.lastOverdueNotification, oneDayAgo)
-            // )
+            or(
+              isNull(tasks.lastOverdueNotification),
+              lt(tasks.lastOverdueNotification, oneDayAgo)
+            )
           )
         );
       
@@ -91,11 +92,11 @@ export async function checkOverdueTasks() {
       for (const task of overdueTasks) {
         await sendTaskNotification(user, task, 'overdue');
         
-        // Update last notification time - DISABLED until column exists
-        // await db
-        //   .update(tasks)
-        //   .set({ lastOverdueNotification: now.toISOString() })
-        //   .where(eq(tasks.id, task.id));
+        // Update last notification time
+        await db
+          .update(tasks)
+          .set({ lastOverdueNotification: now.toISOString() })
+          .where(eq(tasks.id, task.id));
       }
     }
   } catch (error) {

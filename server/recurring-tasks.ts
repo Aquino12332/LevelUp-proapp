@@ -113,8 +113,9 @@ export async function createRecurringTaskInstance(
     try {
       const user = await storage.getUser(userId);
       if (user) {
-        // notificationPreferences field doesn't exist yet - use defaults
-        const prefs = { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
+        const prefs = user.notificationPreferences ? 
+          JSON.parse(user.notificationPreferences as string) : 
+          { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
         
         if (prefs.recurringEnabled) {
           await sendTaskNotification(user, newTask, 'recurring');
