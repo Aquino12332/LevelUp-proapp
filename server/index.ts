@@ -6,6 +6,7 @@ import { createServer } from "http";
 import { seedShop } from "./seed-shop";
 import { startAlarmChecker } from "./alarm-checker";
 import { startRecurringTasksScheduler } from "./recurring-tasks";
+import { checkDueSoonTasks, checkOverdueTasks } from "./task-notifications";
 import { storage } from "./storage";
 
 const app = express();
@@ -119,6 +120,24 @@ app.use((req, res, next) => {
         seedShop().catch(err => log(`Shop seed will retry later`, "seed-shop"));
         startAlarmChecker();
         startRecurringTasksScheduler(storage);
+        
+        // Start task notification checkers
+        // Check due soon tasks every 5 minutes
+        setInterval(() => {
+          checkDueSoonTasks().catch(err => log(`Error checking due soon tasks: ${err}`, "task-notifications"));
+        }, 5 * 60 * 1000);
+        
+        // Check overdue tasks every hour
+        setInterval(() => {
+          checkOverdueTasks().catch(err => log(`Error checking overdue tasks: ${err}`, "task-notifications"));
+        }, 60 * 60 * 1000);
+        
+        // Run initial checks after 10 seconds
+        setTimeout(() => {
+          checkDueSoonTasks().catch(err => log(`Initial due soon check failed: ${err}`, "task-notifications"));
+          checkOverdueTasks().catch(err => log(`Initial overdue check failed: ${err}`, "task-notifications"));
+        }, 10000);
+        
         log("Background services started", "services");
       }, 5000); // 5 second delay to allow Neon database to wake up
     });

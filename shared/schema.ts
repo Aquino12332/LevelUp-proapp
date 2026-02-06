@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   lastLogoutAt: timestamp("lastLogoutAt"),
   isOnline: boolean("isOnline").default(false),
   deviceType: varchar("deviceType"), // 'mobile', 'desktop', 'tablet'
+  pushSubscription: text("pushSubscription"), // web push subscription JSON
+  notificationPreferences: text("notificationPreferences"), // JSON: {dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true}
 });
 
 export const alarms = pgTable("alarms", {
@@ -72,6 +74,9 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   completedAt: timestamp("completedAt"),
+  // Notification tracking fields
+  dueSoonNotificationSent: boolean("dueSoonNotificationSent").default(false),
+  lastOverdueNotification: timestamp("lastOverdueNotification"),
 }, (table) => ({
   userIdIdx: index("tasks_userId_idx").on(table.userId),
   completedIdx: index("tasks_completed_idx").on(table.completed),

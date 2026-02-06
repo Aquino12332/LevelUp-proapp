@@ -7,6 +7,7 @@
 
 import type { IStorage } from "./storage";
 import type { Task } from "@shared/schema";
+import { sendTaskNotification } from "./task-notifications";
 
 /**
  * Check if a recurring task should be created today
@@ -107,6 +108,23 @@ export async function createRecurringTaskInstance(
     });
 
     console.log(`Created recurring task instance: ${newTask.title} for ${today.toDateString()}`);
+    
+    // Send notification for recurring task creation
+    try {
+      const user = await storage.getUser(userId);
+      if (user) {
+        const prefs = user.notificationPreferences ? 
+          JSON.parse(user.notificationPreferences as string) : 
+          { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
+        
+        if (prefs.recurringEnabled) {
+          await sendTaskNotification(user, newTask, 'recurring');
+        }
+      }
+    } catch (error) {
+      console.error("Error sending recurring task notification:", error);
+    }
+    
     return newTask;
   } catch (error) {
     console.error("Error creating recurring task instance:", error);
