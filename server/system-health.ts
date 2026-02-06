@@ -165,7 +165,13 @@ export function getAPIPerformance() {
 export async function getLoadMetrics() {
   try {
     // Get online users
-    const onlineUsers = await db.select().from(users).where(eq(users.isOnline, true));
+    // Consider users online if they were active in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const allUsers = await db.select().from(users);
+    const onlineUsers = allUsers.filter(user => 
+      user.lastLoginAt && new Date(user.lastLoginAt) > fiveMinutesAgo &&
+      (!user.lastLogoutAt || new Date(user.lastLoginAt) > new Date(user.lastLogoutAt))
+    );
     
     return {
       currentLoad: {
