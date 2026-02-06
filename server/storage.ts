@@ -320,6 +320,8 @@ export class MemStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
       completedAt: null,
+      dueSoonNotificationSent: false,
+      lastOverdueNotification: null,
     };
     this.tasks.set(id, task);
     return task;
