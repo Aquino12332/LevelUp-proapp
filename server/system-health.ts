@@ -121,7 +121,8 @@ export function getAPIPerformance() {
   const endpoints = Array.from(endpointMap.entries()).map(([key, metrics]) => {
     const [method, path] = key.split(':');
     const durations = metrics.map(m => m.duration);
-    const errors = metrics.filter(m => m.statusCode >= 400).length;
+    // Only count server errors (5xx), not client/auth errors (4xx)
+    const errors = metrics.filter(m => m.statusCode >= 500).length;
     
     const avgTime = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
     const maxTime = Math.max(...durations);
