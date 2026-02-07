@@ -20,7 +20,7 @@ export const users = pgTable("users", {
   isOnline: boolean("isOnline").default(false),
   deviceType: varchar("deviceType"), // 'mobile', 'desktop', 'tablet'
   pushSubscription: text("pushSubscription"), // web push subscription JSON
-  notificationPreferences: text("notificationPreferences"), // JSON: {dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true}
+  // notificationPreferences: text("notificationPreferences"), // JSON: {dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true} - TEMPORARILY COMMENTED for admin fix
 });
 
 export const alarms = pgTable("alarms", {
