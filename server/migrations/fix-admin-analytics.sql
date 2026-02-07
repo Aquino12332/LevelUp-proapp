@@ -46,7 +46,8 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS "lastLoginAt" timestamp,
   ADD COLUMN IF NOT EXISTS "lastLogoutAt" timestamp,
   ADD COLUMN IF NOT EXISTS "isOnline" boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS "deviceType" varchar;
+  ADD COLUMN IF NOT EXISTS "deviceType" varchar,
+  ADD COLUMN IF NOT EXISTS "pushSubscription" text;
 
 -- Create all necessary indexes
 CREATE INDEX IF NOT EXISTS "userSessions_userId_idx" ON "userSessions"("userId");

@@ -14,13 +14,13 @@ export const users = pgTable("users", {
   resetToken: text("resetToken"), // password reset token
   resetTokenExpiry: timestamp("resetTokenExpiry"), // token expiration time
   createdAt: timestamp("createdAt").notNull().defaultNow(),
-  // Admin tracking fields
-  lastLoginAt: timestamp("lastLoginAt"),
-  lastLogoutAt: timestamp("lastLogoutAt"),
-  isOnline: boolean("isOnline").default(false),
-  deviceType: varchar("deviceType"), // 'mobile', 'desktop', 'tablet'
-  pushSubscription: text("pushSubscription"), // web push subscription JSON
-  // notificationPreferences: text("notificationPreferences"), // JSON: {dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true} - TEMPORARILY COMMENTED for admin fix
+  // Admin tracking fields - TEMPORARILY COMMENTED until migration is run
+  // lastLoginAt: timestamp("lastLoginAt"),
+  // lastLogoutAt: timestamp("lastLogoutAt"),
+  // isOnline: boolean("isOnline").default(false),
+  // deviceType: varchar("deviceType"), // 'mobile', 'desktop', 'tablet'
+  // pushSubscription: text("pushSubscription"), // web push subscription JSON
+  // notificationPreferences: text("notificationPreferences"), // JSON: {dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true}
 });
 
 export const alarms = pgTable("alarms", {
