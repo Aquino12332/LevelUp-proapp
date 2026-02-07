@@ -1,9 +1,9 @@
 import rateLimit from 'express-rate-limit';
 
-// General API rate limiter - 100 requests per 15 minutes
+// General API rate limiter - 1000 requests per 15 minutes (generous for development)
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 1000, // 1000 requests per window (increased for testing)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
@@ -17,10 +17,10 @@ export const apiLimiter = rateLimit({
   },
 });
 
-// Strict rate limiter for auth endpoints - 5 requests per 15 minutes
+// Strict rate limiter for auth endpoints - 20 requests per 15 minutes (more lenient)
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 20, // 20 requests per window (increased for testing)
   message: 'Too many authentication attempts, please try again later.',
   skipSuccessfulRequests: true, // Don't count successful logins
   handler: (req, res) => {
@@ -59,10 +59,10 @@ export const uploadLimiter = rateLimit({
   },
 });
 
-// Create task/note rate limiter - 50 per 15 minutes (prevent spam)
+// Create task/note rate limiter - 200 per 15 minutes (generous for active users)
 export const createLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 creations per window
+  max: 200, // 200 creations per window (increased for testing)
   message: 'You are creating content too quickly. Please slow down.',
   handler: (req, res) => {
     res.status(429).json({
