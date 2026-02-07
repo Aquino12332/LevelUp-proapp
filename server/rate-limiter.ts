@@ -12,7 +12,6 @@ export const apiLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many requests',
       message: 'You have exceeded the rate limit. Please try again later.',
-      retryAfter: req.rateLimit?.resetTime,
     });
   },
 });
