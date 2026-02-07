@@ -34,7 +34,8 @@ export default function Dashboard() {
         });
 
         // Get today's focus sessions
-        const response = await fetch('/api/focus-sessions');
+        const userId = 'demo-user'; // This will be replaced with actual user ID when auth is fixed
+        const response = await fetch(`/api/focus-sessions?userId=${userId}`);
         if (response.ok) {
           const sessions = await response.json();
           const todaySessions = sessions.filter((s: any) => {
