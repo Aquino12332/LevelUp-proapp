@@ -74,9 +74,9 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   completedAt: timestamp("completedAt"),
-  // Notification tracking fields
-  dueSoonNotificationSent: boolean("dueSoonNotificationSent").default(false),
-  lastOverdueNotification: timestamp("lastOverdueNotification"),
+  // Notification tracking fields - COMMENTED OUT until database migration verified
+  // dueSoonNotificationSent: boolean("dueSoonNotificationSent").default(false),
+  // lastOverdueNotification: timestamp("lastOverdueNotification"),
 }, (table) => ({
   userIdIdx: index("tasks_userId_idx").on(table.userId),
   completedIdx: index("tasks_completed_idx").on(table.completed),
