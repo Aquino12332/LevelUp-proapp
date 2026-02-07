@@ -1443,10 +1443,24 @@ export async function registerRoutes(
   });
 
   // Admin routes - protected by requireAdmin middleware
-  app.post("/api/admin/login", requireAdmin, async (req, res) => {
+  // Admin login route - validates admin secret and returns success
+  app.post("/api/admin/login", async (req, res) => {
     try {
+      const adminSecret = req.headers['x-admin-secret'] as string;
+      
+      if (!process.env.ADMIN_SECRET) {
+        return res.status(500).json({ error: "Admin secret not configured" });
+      }
+      
+      if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+        console.warn(`⚠️ Unauthorized admin login attempt from IP: ${getClientIp(req)}`);
+        return res.status(403).json({ error: "Invalid admin credentials" });
+      }
+      
+      console.log(`✅ Admin login successful from IP: ${getClientIp(req)}`);
       res.json({ success: true, message: "Admin authenticated successfully" });
     } catch (error) {
+      console.error("Admin login error:", error);
       res.status(500).json({ error: "Failed to authenticate admin" });
     }
   });
@@ -1462,14 +1476,20 @@ export async function registerRoutes(
       const sanitizedUsers = usersWithStats.map(({ password, resetToken, resetTokenExpiry, ...user }) => ({
         ...user,
         stats: user.stats,
-        isOnline: user.lastLoginAt && new Date(user.lastLoginAt) > fiveMinutesAgo &&
-                  (!user.lastLogoutAt || new Date(user.lastLoginAt) > new Date(user.lastLogoutAt)),
+        // Safe access to optional fields that may not exist yet
+        isOnline: user.lastLoginAt ? (
+          new Date(user.lastLoginAt) > fiveMinutesAgo &&
+          (!user.lastLogoutAt || new Date(user.lastLoginAt) > new Date(user.lastLogoutAt))
+        ) : false,
+        lastLoginAt: user.lastLoginAt || null,
+        lastLogoutAt: user.lastLogoutAt || null,
+        deviceType: user.deviceType || null,
       }));
       
       res.json(sanitizedUsers);
     } catch (error) {
-      console.error("Failed to fetch users:", error);
-      res.status(500).json({ error: "Failed to fetch users" });
+      console.error("[Admin] Failed to fetch users:", error);
+      res.status(500).json({ error: "Failed to fetch users", details: (error as Error).message });
     }
   });
 
@@ -1502,7 +1522,7 @@ export async function registerRoutes(
         u.lastLoginAt && new Date(u.lastLoginAt) > oneDayAgo
       ).length;
       
-      // Device breakdown
+      // Device breakdown - safe access to deviceType
       const deviceBreakdown = allUsers.reduce((acc, user) => {
         const device = user.deviceType || 'unknown';
         acc[device] = (acc[device] || 0) + 1;
@@ -1523,8 +1543,8 @@ export async function registerRoutes(
         deviceBreakdown,
       });
     } catch (error) {
-      console.error("Failed to fetch admin stats:", error);
-      res.status(500).json({ error: "Failed to fetch admin stats" });
+      console.error("[Admin] Failed to fetch admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch admin stats", details: (error as Error).message });
     }
   });
 

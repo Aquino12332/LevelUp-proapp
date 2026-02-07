@@ -218,7 +218,8 @@ export async function getPeakUsageHours(fromDate: Date, toDate: Date) {
     
     return result;
   } catch (error) {
-    console.error('Error getting peak usage hours:', error);
+    console.error('[Analytics] Error getting peak usage hours (activityLog table may not exist):', error);
+    // Return empty data if table doesn't exist
     return Array.from({ length: 24 }, (_, hour) => ({
       hour,
       count: 0,
@@ -258,7 +259,7 @@ export async function getDailyActiveUsers(fromDate: Date, toDate: Date) {
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
-    console.error('Error getting daily active users:', error);
+    console.error('[Analytics] Error getting daily active users (activityLog table may not exist):', error);
     return [];
   }
 }
@@ -335,18 +336,23 @@ export async function getStudentDetail(userId: string, fromDate: Date, toDate: D
     const stats = await db.select().from(userStats).where(eq(userStats.userId, userId)).limit(1);
     
     // Get activity timeline
-    const activities = await db
-      .select()
-      .from(activityLog)
-      .where(
-        and(
-          eq(activityLog.userId, userId),
-          gte(activityLog.timestamp, fromDate),
-          lte(activityLog.timestamp, toDate)
+    let activities: any[] = [];
+    try {
+      activities = await db
+        .select()
+        .from(activityLog)
+        .where(
+          and(
+            eq(activityLog.userId, userId),
+            gte(activityLog.timestamp, fromDate),
+            lte(activityLog.timestamp, toDate)
+          )
         )
-      )
-      .orderBy(desc(activityLog.timestamp))
-      .limit(100);
+        .orderBy(desc(activityLog.timestamp))
+        .limit(100);
+    } catch (err) {
+      console.log('[Analytics] Could not fetch activity timeline (activityLog table may not exist)');
+    }
     
     // Get focus sessions
     const sessions = await db
