@@ -83,8 +83,14 @@ export async function registerRoutes(
     next();
   });
 
-  // Apply rate limiting to all API routes
-  app.use("/api", apiLimiter);
+  // Apply rate limiting to all API routes (except alarm checker which runs frequently)
+  app.use("/api", (req, res, next) => {
+    // Skip rate limiting for alarm endpoints to prevent blocking alarm checks
+    if (req.path.startsWith('/alarms')) {
+      return next();
+    }
+    return apiLimiter(req, res, next);
+  });
   
   // Track user activity on all API requests
   app.use("/api", trackUserActivity);
