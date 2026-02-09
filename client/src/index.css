@@ -61,6 +61,12 @@
 }
 
 :root {
+  /* iPhone Safe Area Support */
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  
   /* Vibrant Light Mode */
   --background: 240 10% 98%; /* Very light cool gray */
   --foreground: 240 10% 3.9%;
@@ -151,6 +157,34 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary;
+    
+    /* iOS Safe Area Support */
+    padding-top: var(--sat);
+    padding-right: var(--sar);
+    padding-bottom: var(--sab);
+    padding-left: var(--sal);
+    
+    /* Disable iOS bounce/overscroll */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent pull-to-refresh on iOS */
+  html {
+    overflow: hidden;
+    height: 100%;
+  }
+  
+  #root {
+    overflow: auto;
+    height: 100%;
+  }
+  
+  /* Prevent iOS zoom on input focus */
+  @media (max-width: 768px) {
+    input, textarea, select {
+      font-size: max(16px, 1em) !important;
+    }
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-bold tracking-tight;

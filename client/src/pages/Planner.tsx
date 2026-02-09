@@ -119,7 +119,7 @@ export default function Planner() {
     }
 
     try {
-      const userId = user?.id || "default-user";
+      const userId = user?.id || "demo-user"; // Match useAlarmManager userId
       
       // Create the alarm first
       const alarmResponse = await fetch("/api/alarms", {

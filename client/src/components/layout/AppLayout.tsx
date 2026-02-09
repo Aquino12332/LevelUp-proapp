@@ -180,8 +180,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         {/* Mobile Bottom Nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border h-16 z-50 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-          <div className="flex items-center h-full px-2 pb-safe min-w-max gap-1">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" style={{ paddingBottom: 'var(--sab)' }}>
+          <div className="flex items-center h-16 px-2 min-w-max gap-1">
             {navItems.map((item) => {
                const isActive = location === item.href;
                return (
@@ -189,7 +189,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                    key={item.href} 
                    href={item.href}
                    className={cn(
-                     "flex flex-col items-center justify-center p-2 rounded-lg gap-1 flex-shrink-0 min-w-[72px]",
+                     "flex flex-col items-center justify-center p-3 rounded-lg gap-1 flex-shrink-0 min-w-[80px] min-h-[56px]",
                      isActive ? "text-primary" : "text-muted-foreground"
                    )}
                  >
