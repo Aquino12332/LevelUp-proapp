@@ -1,11 +1,11 @@
 {
-  "name": "ProApp - Focus & Productivity",
-  "short_name": "ProApp",
-  "description": "Focus timer, task planner, and gamified productivity app with alarm system",
+  "name": "LevelUp - Focus & Productivity",
+  "short_name": "LevelUp",
+  "description": "Gamified study app with focus sessions, task planner, alarms, and social features",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c3aed",
   "orientation": "portrait-primary",
   "icons": [
     {

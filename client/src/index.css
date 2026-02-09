@@ -167,17 +167,34 @@
     /* Disable iOS bounce/overscroll */
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    
+    /* Disable iOS text selection callout/magnifier */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Allow selection only in input fields and content areas */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   
   /* Prevent pull-to-refresh on iOS */
   html {
     overflow: hidden;
     height: 100%;
+    position: fixed;
+    width: 100%;
   }
   
   #root {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     height: 100%;
+    width: 100%;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Prevent iOS zoom on input focus */
