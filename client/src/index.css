@@ -180,21 +180,15 @@
     user-select: text;
   }
   
-  /* Prevent pull-to-refresh on iOS */
-  html {
-    overflow: hidden;
+  /* Enable scrolling on mobile */
+  html, body {
     height: 100%;
-    position: fixed;
     width: 100%;
   }
   
   #root {
-    overflow-y: auto;
+    min-height: 100%;
     overflow-x: hidden;
-    height: 100%;
-    width: 100%;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
   }
   
   /* Prevent iOS zoom on input focus */
