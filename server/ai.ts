@@ -17,8 +17,8 @@ export async function generateNoteSummary(title: string, body: string): Promise<
   }
 
   try {
-    // Get the generative model (using gemini-pro for compatibility)
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-pro' });
+    // Get the generative model
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     // Strip HTML tags from body for cleaner processing
     const plainTextBody = body.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
