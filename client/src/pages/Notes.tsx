@@ -574,7 +574,7 @@ export default function Notes() {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="md:hidden mr-1" 
+                    className="md:hidden mr-1 flex-shrink-0" 
                     onClick={() => setActiveNote(null)}
                   >
                     <ArrowLeft className="h-4 w-4" />
@@ -584,16 +584,16 @@ export default function Notes() {
                     variant={isListening ? "destructive" : "outline"} 
                     size="sm" 
                     onClick={toggleRecord}
-                    className={cn("gap-2 rounded-full transition-all whitespace-nowrap", isListening && "animate-pulse")}
+                    className={cn("gap-2 rounded-full transition-all whitespace-nowrap flex-shrink-0", isListening && "animate-pulse")}
                     disabled={!isSpeechSupported}
                   >
                     <Mic className="h-4 w-4" /> {isListening ? "Stop" : "Voice"}
                   </Button>
-                  <div className="h-4 w-px bg-border mx-1"></div>
-                  <Button variant="ghost" size="sm" className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 whitespace-nowrap" onClick={handleSummarize}>
+                  <div className="h-4 w-px bg-border mx-1 flex-shrink-0"></div>
+                  <Button variant="ghost" size="sm" className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 whitespace-nowrap flex-shrink-0" onClick={handleSummarize}>
                     <Sparkles className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">AI Summarize</span><span className="sm:hidden">AI</span>
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleTextToTask} className="whitespace-nowrap">
+                  <Button variant="ghost" size="sm" onClick={handleTextToTask} className="whitespace-nowrap flex-shrink-0">
                     <CheckSquare className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">Text-to-Task</span><span className="sm:hidden">Tasks</span>
                   </Button>
                   
