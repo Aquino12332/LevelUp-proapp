@@ -307,7 +307,7 @@ export default function Notes() {
     
     setIsGeneratingAI(true);
     try {
-      const response = await fetch(`/api/notes/${activeNote}/ai-summary`, {
+      const response = await fetch(`/api/notes/${activeNote}/summarize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
