@@ -38,6 +38,7 @@ export default function Notes() {
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { userId } = useGamification(); // Get authenticated user ID
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
   // Forward ref for debounced save to use in speech recognition
   const debouncedSaveRef = useRef<((id: string, updates: Partial<InsertNote>) => void) | null>(null);
@@ -298,6 +299,42 @@ export default function Notes() {
   const handleDelete = () => {
     if (activeNote && confirm("Are you sure you want to delete this note?")) {
       deleteNoteMutation.mutate(activeNote);
+    }
+  };
+
+  const handleGenerateAISummary = async () => {
+    if (!activeNote) return;
+    
+    setIsGeneratingAI(true);
+    try {
+      const response = await fetch(`/api/notes/${activeNote}/ai-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate AI summary');
+      }
+      
+      await response.json();
+      
+      // Refresh notes to show the summary
+      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+      
+      toast({
+        title: "AI Summary Generated! ✨",
+        description: "Your note summary is ready.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate summary. Make sure you have content in your note.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -750,6 +787,10 @@ export default function Notes() {
                       <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleGenerateAISummary} disabled={isGeneratingAI}>
+                        <Sparkles className="mr-2 h-4 w-4" /> {isGeneratingAI ? "Generating..." : "AI Summary"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => isEditing ? handleStopEditing() : setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" /> {isEditing ? "Stop Editing" : "Edit Note"}
                       </DropdownMenuItem>
