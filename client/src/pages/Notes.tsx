@@ -675,8 +675,9 @@ export default function Notes() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                </div>
-                <div className="flex items-center gap-1 ml-2">
+                  </div>
+                  
+                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="text-primary hover:text-primary/80 hover:bg-primary/10">
