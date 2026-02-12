@@ -927,39 +927,19 @@ export default function Notes() {
                     className="whitespace-pre-wrap mb-8 prose prose-lg max-w-none dark:prose-invert [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
                     dangerouslySetInnerHTML={{ __html: currentNote.body }} 
                   />
-                  <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg my-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-yellow-800 flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" /> AI Summary
-                      </h3>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => summarizeMutation.mutate(currentNote.id)}
-                        disabled={summarizeMutation.isPending}
-                        className="bg-white hover:bg-yellow-50"
-                      >
-                        {summarizeMutation.isPending ? (
-                          <>
-                            <Sparkles className="h-3 w-3 mr-1 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            {currentNote.aiSummary ? "Regenerate" : "Generate Summary"}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    {currentNote.aiSummary ? (
-                      <p className="text-sm text-yellow-900">{currentNote.aiSummary}</p>
-                    ) : (
-                      <p className="text-sm text-yellow-700 italic">
-                        Click "Generate Summary" to create an AI-powered summary of this note.
-                      </p>
-                    )}
-                  </div>
+                  {currentNote.aiSummary && (
+                    <Card className="mt-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-purple-200 dark:border-purple-800">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles className="w-5 h-5 text-purple-500" />
+                          <h3 className="font-semibold text-base">AI Summary</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {currentNote.aiSummary}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </>
               )}
             </div>
