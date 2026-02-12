@@ -569,8 +569,8 @@ export default function Notes() {
           <>
             {/* Toolbar */}
             <div className="border-b border-border p-4 flex flex-col gap-4 bg-muted/30">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between w-full gap-2">
+                <div className="flex items-center gap-2 overflow-x-auto flex-1 min-w-0">
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -590,9 +590,6 @@ export default function Notes() {
                     <Mic className="h-4 w-4" /> {isListening ? "Stop" : "Voice"}
                   </Button>
                   <div className="h-4 w-px bg-border mx-1 flex-shrink-0"></div>
-                  <Button variant="ghost" size="sm" className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 whitespace-nowrap flex-shrink-0" onClick={handleSummarize}>
-                    <Sparkles className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">AI Summarize</span><span className="sm:hidden">AI</span>
-                  </Button>
                   <Button variant="ghost" size="sm" onClick={handleTextToTask} className="whitespace-nowrap flex-shrink-0">
                     <CheckSquare className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">Text-to-Task</span><span className="sm:hidden">Tasks</span>
                   </Button>
