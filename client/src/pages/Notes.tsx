@@ -314,11 +314,17 @@ export default function Notes() {
         },
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to generate AI summary');
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server error - please check if GEMINI_API_KEY is set in Render');
       }
       
-      await response.json();
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate AI summary');
+      }
       
       // Refresh notes to show the summary
       queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
@@ -328,9 +334,10 @@ export default function Notes() {
         description: "Your note summary is ready.",
       });
     } catch (error: any) {
+      console.error('AI Summary Error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate summary. Make sure you have content in your note.",
+        title: "AI Summary Failed",
+        description: error.message || "Please check that GEMINI_API_KEY is configured in Render environment variables.",
         variant: "destructive",
       });
     } finally {
