@@ -1,25 +1,22 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
-// Initialize Gemini AI
-const genAI = process.env.GEMINI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+// Initialize Groq AI
+const groq = process.env.GROQ_API_KEY 
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
 /**
- * Generate a summary of a note using Google Gemini AI
+ * Generate a summary of a note using Groq AI
  * @param title - The note title
  * @param body - The note body (HTML content)
  * @returns A concise AI-generated summary
  */
 export async function generateNoteSummary(title: string, body: string): Promise<string> {
-  if (!genAI) {
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your environment variables.');
+  if (!groq) {
+    throw new Error('GROQ_API_KEY is not configured. Please add it to your environment variables.');
   }
 
   try {
-    // Get the generative model (trying gemini-1.5-pro)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-
     // Strip HTML tags from body for cleaner processing
     const plainTextBody = body.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -32,20 +29,30 @@ Content: ${plainTextBody}
 
 Summary:`;
 
-    // Generate content
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const summary = response.text();
+    // Generate content using Groq (llama3 model - fast and free!)
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'llama-3.1-70b-versatile', // Fast, high-quality, free
+      temperature: 0.7,
+      max_tokens: 200,
+    });
+
+    const summary = chatCompletion.choices[0]?.message?.content || '';
 
     return summary.trim();
   } catch (error: any) {
     console.error('Error generating AI summary:', error);
     
     // Provide helpful error messages
-    if (error.message?.includes('API_KEY_INVALID')) {
-      throw new Error('Invalid GEMINI_API_KEY. Please check your API key.');
-    } else if (error.message?.includes('quota')) {
-      throw new Error('Gemini API quota exceeded. Please check your usage limits.');
+    if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('authentication')) {
+      throw new Error('Invalid GROQ_API_KEY. Please check your API key.');
+    } else if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      throw new Error('Groq API quota exceeded. Please try again later.');
     }
     
     throw new Error(`Failed to generate summary: ${error.message || 'Unknown error'}`);
