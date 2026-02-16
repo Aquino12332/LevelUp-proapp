@@ -29,7 +29,7 @@ Content: ${plainTextBody}
 
 Summary:`;
 
-    // Generate content using Groq (llama3 model - fast and free!)
+    // Generate content using Groq (llama3.1 model - fast and free!)
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
@@ -37,7 +37,7 @@ Summary:`;
           content: prompt,
         },
       ],
-      model: 'llama-3.1-70b-versatile', // Fast, high-quality, free
+      model: 'llama-3.1-8b-instant', // Fast, high-quality, free (non-deprecated)
       temperature: 0.7,
       max_tokens: 200,
     });
