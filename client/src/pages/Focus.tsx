@@ -187,7 +187,7 @@ export default function Focus() {
       />
       
       <div className={cn(
-        "min-h-[80vh] flex flex-col items-center justify-center transition-colors duration-700",
+        "min-h-screen flex flex-col items-center justify-center transition-colors duration-700 py-8",
         mode === "ultifocus" && isActive ? "bg-slate-950 text-purple-100" : ""
       )}>
         
