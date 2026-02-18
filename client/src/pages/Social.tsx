@@ -234,7 +234,8 @@ export default function Social() {
                  <p className="font-medium">Loading global rankings...</p>
                </div>
              ) : leaderboard.length > 0 ? (
-               leaderboard.map((user: any) => (
+               <div className="max-h-[600px] overflow-y-auto">
+               {leaderboard.map((user: any) => (
                  <div 
                    key={user.id}
                    className={`flex items-center p-4 border-b last:border-0 hover:bg-muted/50 transition-colors ${user.isUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}`}
@@ -256,7 +257,8 @@ export default function Social() {
                      {user.xp.toLocaleString()} <span className="text-xs text-muted-foreground font-sans">XP</span>
                    </div>
                  </div>
-               ))
+               ))}
+              </div>
              ) : (
                <div className="p-8 text-center text-muted-foreground">
                  <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
