@@ -9,3 +9,14 @@ vite.config.ts.*
 .env
 .env.local
 .env.production
+
+# Backups
+backup_*/
+*.backup
+
+# Development artifacts
+.local/
+data/
+
+# Temporary files
+tmp_*
