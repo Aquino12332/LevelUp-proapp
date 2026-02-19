@@ -137,7 +137,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </aside>
 
       {/* Mobile Layout & Main Content */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Mobile Header */}
         <header className="md:hidden h-16 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50 flex items-center justify-between px-4">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
