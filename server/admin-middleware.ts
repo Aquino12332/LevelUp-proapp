@@ -1,20 +1,29 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
-// Helper to detect device type from user agent
+// Helper to detect device type from user agent (enhanced)
 export function detectDeviceType(userAgent: string | undefined): string {
   if (!userAgent) return "unknown";
   
-  const ua = userAgent.toLowerCase();
+  const ua = userAgent; // Keep original case for case-sensitive tests
   
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+  // Check for tablets first (iPad, Android tablets, etc.)
+  if (/(iPad|tablet|playbook|silk)|(android(?!.*mobile))/i.test(ua)) {
     return "tablet";
   }
   
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+  // Check for mobile devices (phones)
+  // Enhanced to catch more mobile devices including Redmi and other Android phones
+  if (/(mobile|android.*mobile|iphone|ipod|blackberry|windows phone|opera mini|iemobile|kindle|webos)/i.test(ua)) {
     return "mobile";
   }
   
+  // Check for specific mobile brands that might not have "mobile" in UA
+  if (/(xiaomi|redmi|huawei|oppo|vivo|samsung.*sm-|oneplus)/i.test(ua)) {
+    return "mobile";
+  }
+  
+  // Default to desktop
   return "desktop";
 }
 
