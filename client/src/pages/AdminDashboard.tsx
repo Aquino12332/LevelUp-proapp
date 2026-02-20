@@ -381,50 +381,142 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Activity Heatmap */}
+              {/* Activity Heatmap - Improved Clarity */}
               <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-blue-200/50 transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-blue-600" />
                     Peak Activity Hours
                   </CardTitle>
-                  <CardDescription>When students are most active (24h)</CardDescription>
+                  <CardDescription>Student activity throughout the day</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-12 gap-1">
-                    {peakHours.map((hour) => (
-                      <div
-                        key={hour.hour}
-                        className={cn(
-                          "aspect-square rounded flex items-center justify-center text-xs font-medium transition-all hover:scale-110 cursor-pointer",
-                          hour.count > 100 ? "bg-purple-600 text-white shadow-lg" :
-                          hour.count > 50 ? "bg-purple-400 text-white" :
-                          hour.count > 20 ? "bg-purple-200 text-purple-900" :
-                          "bg-gray-100 text-gray-600"
-                        )}
-                        title={`${hour.label}: ${hour.count} activities`}
-                      >
-                        {hour.hour}
+                <CardContent className="space-y-4">
+                  {/* Time Periods */}
+                  <div className="space-y-3">
+                    {/* Night (12 AM - 6 AM) */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                        <span className="bg-gray-100 px-2 py-1 rounded">🌙 Night (12 AM - 6 AM)</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
-                    <span>Midnight</span>
-                    <span>Noon</span>
-                    <span>Midnight</span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 justify-center">
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-gray-100 rounded" />
-                      <span className="text-xs text-gray-600">Low</span>
+                      <div className="grid grid-cols-6 gap-2">
+                        {peakHours.slice(0, 6).map((hour) => (
+                          <div
+                            key={hour.hour}
+                            className={cn(
+                              "h-14 rounded-lg flex flex-col items-center justify-center font-medium transition-all hover:scale-105 cursor-pointer shadow-sm",
+                              hour.count > 100 ? "bg-purple-600 text-white" :
+                              hour.count > 50 ? "bg-purple-400 text-white" :
+                              hour.count > 20 ? "bg-purple-200 text-purple-900" :
+                              "bg-gray-100 text-gray-600"
+                            )}
+                            title={`${hour.hour === 0 ? '12' : hour.hour} AM: ${hour.count} activities`}
+                          >
+                            <div className="text-base font-bold">{hour.hour === 0 ? '12' : hour.hour}</div>
+                            <div className="text-xs opacity-75">AM</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-purple-200 rounded" />
-                      <span className="text-xs text-gray-600">Medium</span>
+
+                    {/* Morning (6 AM - 12 PM) */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                        <span className="bg-yellow-50 px-2 py-1 rounded">🌅 Morning (6 AM - 12 PM)</span>
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {peakHours.slice(6, 12).map((hour) => (
+                          <div
+                            key={hour.hour}
+                            className={cn(
+                              "h-14 rounded-lg flex flex-col items-center justify-center font-medium transition-all hover:scale-105 cursor-pointer shadow-sm",
+                              hour.count > 100 ? "bg-purple-600 text-white" :
+                              hour.count > 50 ? "bg-purple-400 text-white" :
+                              hour.count > 20 ? "bg-purple-200 text-purple-900" :
+                              "bg-gray-100 text-gray-600"
+                            )}
+                            title={`${hour.hour} AM: ${hour.count} activities`}
+                          >
+                            <div className="text-base font-bold">{hour.hour}</div>
+                            <div className="text-xs opacity-75">AM</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-purple-600 rounded" />
-                      <span className="text-xs text-gray-600">High</span>
+
+                    {/* Afternoon (12 PM - 6 PM) */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                        <span className="bg-blue-50 px-2 py-1 rounded">☀️ Afternoon (12 PM - 6 PM)</span>
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {peakHours.slice(12, 18).map((hour) => {
+                          const displayHour = hour.hour === 12 ? 12 : hour.hour - 12;
+                          return (
+                            <div
+                              key={hour.hour}
+                              className={cn(
+                                "h-14 rounded-lg flex flex-col items-center justify-center font-medium transition-all hover:scale-105 cursor-pointer shadow-sm",
+                                hour.count > 100 ? "bg-purple-600 text-white" :
+                                hour.count > 50 ? "bg-purple-400 text-white" :
+                                hour.count > 20 ? "bg-purple-200 text-purple-900" :
+                                "bg-gray-100 text-gray-600"
+                              )}
+                              title={`${displayHour} PM: ${hour.count} activities`}
+                            >
+                              <div className="text-base font-bold">{displayHour}</div>
+                              <div className="text-xs opacity-75">PM</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Evening (6 PM - 12 AM) */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                        <span className="bg-purple-50 px-2 py-1 rounded">🌆 Evening (6 PM - 12 AM)</span>
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {peakHours.slice(18, 24).map((hour) => {
+                          const displayHour = hour.hour - 12;
+                          return (
+                            <div
+                              key={hour.hour}
+                              className={cn(
+                                "h-14 rounded-lg flex flex-col items-center justify-center font-medium transition-all hover:scale-105 cursor-pointer shadow-sm",
+                                hour.count > 100 ? "bg-purple-600 text-white" :
+                                hour.count > 50 ? "bg-purple-400 text-white" :
+                                hour.count > 20 ? "bg-purple-200 text-purple-900" :
+                                "bg-gray-100 text-gray-600"
+                              )}
+                              title={`${displayHour} PM: ${hour.count} activities`}
+                            >
+                              <div className="text-base font-bold">{displayHour}</div>
+                              <div className="text-xs opacity-75">PM</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex items-center justify-center gap-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gray-100 rounded border border-gray-300" />
+                      <span className="text-xs font-medium text-gray-600">Low Activity</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-purple-200 rounded" />
+                      <span className="text-xs font-medium text-gray-600">Medium</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-purple-400 rounded" />
+                      <span className="text-xs font-medium text-gray-600">High</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-purple-600 rounded" />
+                      <span className="text-xs font-medium text-gray-600">Peak</span>
                     </div>
                   </div>
                 </CardContent>
