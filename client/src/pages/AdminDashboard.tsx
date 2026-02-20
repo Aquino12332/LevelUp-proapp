@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -211,12 +211,31 @@ export default function AdminDashboard() {
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
 
-  // Mock peak hours data (in real app, this would come from API)
-  const peakHours = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    label: `${i}:00`,
-    count: Math.floor(Math.random() * 150) // Replace with real data
-  }));
+  // Mock peak hours data - memoized to prevent re-generation on every render
+  // In production, this would come from your API based on actual user activity
+  const peakHours = useMemo(() => {
+    // Simulate realistic activity patterns (higher during study hours)
+    const generateRealisticActivity = (hour: number) => {
+      // Night hours (12 AM - 6 AM): Very low activity
+      if (hour >= 0 && hour < 6) return Math.floor(Math.random() * 20) + 5;
+      // Morning (6 AM - 9 AM): Low to medium
+      if (hour >= 6 && hour < 9) return Math.floor(Math.random() * 40) + 20;
+      // Late morning (9 AM - 12 PM): Medium
+      if (hour >= 9 && hour < 12) return Math.floor(Math.random() * 60) + 40;
+      // Afternoon (12 PM - 6 PM): High activity (after school)
+      if (hour >= 12 && hour < 18) return Math.floor(Math.random() * 80) + 70;
+      // Evening (6 PM - 10 PM): Peak activity (homework/study time)
+      if (hour >= 18 && hour < 22) return Math.floor(Math.random() * 50) + 100;
+      // Late night (10 PM - 12 AM): Medium to low
+      return Math.floor(Math.random() * 40) + 30;
+    };
+
+    return Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      label: `${i}:00`,
+      count: generateRealisticActivity(i)
+    }));
+  }, []); // Empty dependency array = only generate once when component mounts
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50/80 via-purple-50/50 to-fuchsia-50/80 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-fuchsia-950/30">
