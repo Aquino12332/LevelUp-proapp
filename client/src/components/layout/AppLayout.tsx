@@ -11,7 +11,8 @@ import {
   Bell,
   Clock,
   UserCircle,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGamification } from '@/lib/gamification';
@@ -26,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // Assets
 import coinImg from '@assets/generated_images/3d_gold_coin_icon.png';
@@ -54,8 +56,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background font-sans flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground h-screen sticky top-0">
+      {/* Desktop Sidebar - Fixed position */}
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground h-screen fixed top-0 left-0 overflow-y-auto">
         <div className="p-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
              <Target className="h-6 w-6 text-primary" />
@@ -137,12 +139,86 @@ export function AppLayout({ children }: AppLayoutProps) {
       </aside>
 
       {/* Mobile Layout & Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto md:ml-64">
         {/* Mobile Header */}
         <header className="md:hidden h-16 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50 flex items-center justify-between px-4">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <Menu className="h-6 w-6" />
-          </Button>
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <div className="flex flex-col h-full bg-sidebar">
+                {/* Mobile Sidebar Header */}
+                <div className="p-6 flex items-center justify-between border-b border-sidebar-border">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                      <Target className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="font-heading font-bold text-2xl tracking-tight">LevelUp</span>
+                  </div>
+                </div>
+
+                {/* Mobile Sidebar User Info */}
+                <div className="px-4 py-4">
+                  <div className="p-4 rounded-xl bg-sidebar-accent border border-sidebar-border flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <img src={avatarImg} alt="Avatar" className="h-10 w-10 rounded-full bg-white border border-border" />
+                      <div className="flex flex-col text-left">
+                        <span className="font-bold text-sm">{stats.name}</span>
+                        <span className="text-xs text-muted-foreground">Lvl {stats.level} Scholar</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>XP</span>
+                        <span>{stats.xp} / {stats.xpToNextLevel}</span>
+                      </div>
+                      <Progress value={(stats.xp / stats.xpToNextLevel) * 100} className="h-2" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Sidebar Navigation */}
+                <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+                  {navItems.map((item) => {
+                    const isActive = location === item.href;
+                    return (
+                      <Link 
+                        key={item.href} 
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                          isActive 
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 font-medium" 
+                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className={cn("h-5 w-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary")} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Mobile Sidebar Stats */}
+                <div className="p-4 border-t border-sidebar-border">
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2 text-amber-500 font-bold">
+                      <img src={coinImg} className="h-6 w-6 object-contain" />
+                      <span>{stats.coins}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-orange-500 font-bold">
+                      <img src={fireImg} className="h-6 w-6 object-contain" />
+                      <span>{stats.streak}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
           <span className="font-heading font-bold text-xl">LevelUp</span>
           <div className="flex items-center gap-2">
              <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
@@ -179,25 +255,27 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children}
         </div>
 
-        {/* Mobile Bottom Nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" style={{ paddingBottom: 'var(--sab)' }}>
-          <div className="flex items-center h-16 px-2 min-w-max gap-1">
-            {navItems.map((item) => {
-               const isActive = location === item.href;
-               return (
-                 <Link 
-                   key={item.href} 
-                   href={item.href}
-                   className={cn(
-                     "flex flex-col items-center justify-center p-3 rounded-lg gap-1 flex-shrink-0 min-w-[80px] min-h-[56px]",
-                     isActive ? "text-primary" : "text-muted-foreground"
-                   )}
-                 >
-                   <item.icon className={cn("h-5 w-5", isActive && "fill-current")} />
-                   <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
-                 </Link>
-               )
-            })}
+        {/* Mobile Bottom Nav - Horizontal Scroll Fixed */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-bottom">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-hide overscroll-x-contain">
+            <div className="flex items-center h-16 px-2 min-w-max gap-1">
+              {navItems.map((item) => {
+                 const isActive = location === item.href;
+                 return (
+                   <Link 
+                     key={item.href} 
+                     href={item.href}
+                     className={cn(
+                       "flex flex-col items-center justify-center p-3 rounded-lg gap-1 flex-shrink-0 min-w-[80px] min-h-[56px] touch-manipulation",
+                       isActive ? "text-primary" : "text-muted-foreground"
+                     )}
+                   >
+                     <item.icon className={cn("h-5 w-5", isActive && "fill-current")} />
+                     <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
+                   </Link>
+                 )
+              })}
+            </div>
           </div>
         </nav>
       </main>

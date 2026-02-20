@@ -218,6 +218,31 @@
   .animate-fade-in {
     animation: fadeIn 1s ease-in;
   }
+  
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Mobile safe area for bottom nav */
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+  
+  /* Prevent overscroll bounce on mobile horizontal scroll */
+  .overscroll-x-contain {
+    overscroll-behavior-x: contain;
+  }
+  
+  /* Better touch targets for mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
 }
 
 @keyframes fadeIn {
