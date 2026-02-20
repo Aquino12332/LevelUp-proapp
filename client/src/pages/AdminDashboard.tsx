@@ -211,13 +211,6 @@ export default function AdminDashboard() {
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
 
-  // Mock peak hours data (in real app, this would come from API)
-  const peakHours = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    label: `${i}:00`,
-    count: Math.floor(Math.random() * 150) // Replace with real data
-  }));
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50/80 via-purple-50/50 to-fuchsia-50/80 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-fuchsia-950/30">
       {/* Enhanced Header */}
@@ -340,96 +333,44 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
-            {/* Device Distribution & Activity Heatmap */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Device Distribution Pie Chart */}
-              <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-purple-200/50 transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Smartphone className="w-5 h-5 text-purple-600" />
-                    Device Distribution
-                  </CardTitle>
-                  <CardDescription>How students access the platform</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {deviceChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={deviceChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {deviceChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[250px] flex items-center justify-center text-gray-400">
-                      No device data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Activity Heatmap */}
-              <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-blue-200/50 transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-purple-600" />
-                    Peak Activity Hours
-                  </CardTitle>
-                  <CardDescription>When students are most active (24h)</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-12 gap-1">
-                    {peakHours.map((hour) => (
-                      <div
-                        key={hour.hour}
-                        className={cn(
-                          "aspect-square rounded flex items-center justify-center text-xs font-medium transition-all hover:scale-110 cursor-pointer",
-                          hour.count > 100 ? "bg-purple-600 text-white shadow-lg" :
-                          hour.count > 50 ? "bg-purple-400 text-white" :
-                          hour.count > 20 ? "bg-purple-200 text-purple-900" :
-                          "bg-gray-100 text-gray-600"
-                        )}
-                        title={`${hour.label}: ${hour.count} activities`}
+            {/* Device Distribution */}
+            <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-purple-200/50 transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-purple-600" />
+                  Device Distribution
+                </CardTitle>
+                <CardDescription>How students access the platform</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {deviceChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={deviceChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={90}
+                        fill="#8884d8"
+                        dataKey="value"
                       >
-                        {hour.hour}
-                      </div>
-                    ))}
+                        {deviceChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
+                    No device data available
                   </div>
-                  <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
-                    <span>Midnight</span>
-                    <span>Noon</span>
-                    <span>Midnight</span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 justify-center">
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-gray-100 rounded" />
-                      <span className="text-xs text-gray-600">Low</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-purple-200 rounded" />
-                      <span className="text-xs text-gray-600">Medium</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-purple-600 rounded" />
-                      <span className="text-xs text-gray-600">High</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Users Tab */}
