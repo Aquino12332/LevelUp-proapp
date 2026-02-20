@@ -21,8 +21,23 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
-  Server
+  Server,
+  Shield,
+  ChevronRight,
+  RefreshCw,
+  ArrowUpRight,
+  ArrowDownRight,
+  Filter
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import AdminUsageMonitoring from "./AdminUsageMonitoring";
 import AdminSystemHealth from "./AdminSystemHealth";
@@ -65,6 +80,7 @@ export default function AdminDashboard() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const adminSecret = sessionStorage.getItem("adminSecret");
 
@@ -151,10 +167,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "online" && user.isOnline) ||
+      (statusFilter === "offline" && !user.isOnline);
+    return matchesSearch && matchesStatus;
+  });
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Never";
@@ -181,19 +201,60 @@ export default function AdminDashboard() {
     );
   }
 
+  // Prepare device chart data
+  const deviceChartData = stats?.deviceBreakdown 
+    ? Object.entries(stats.deviceBreakdown).map(([name, value]) => ({ 
+        name: name.charAt(0).toUpperCase() + name.slice(1), 
+        value 
+      }))
+    : [];
+
+  const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
+
+  // Mock peak hours data (in real app, this would come from API)
+  const peakHours = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    label: `${i}:00`,
+    count: Math.floor(Math.random() * 150) // Replace with real data
+  }));
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-600">Student Activity Tracking & Management</p>
+    <div className="min-h-screen bg-gradient-to-br from-violet-50/80 via-purple-50/50 to-fuchsia-50/80 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-fuchsia-950/30">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-sm opacity-90 mb-2">
+                <Shield className="w-4 h-4" />
+                <span>Admin</span>
+                <ChevronRight className="w-3 h-3" />
+                <span>Dashboard</span>
+              </div>
+              <h1 className="text-3xl font-bold">Welcome, Admin</h1>
+              <p className="text-sm opacity-90 mt-1">Monitor and manage your student community</p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={fetchData}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleLogout}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
         </div>
       </div>
 
@@ -220,158 +281,277 @@ export default function AdminDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
+            {/* Enhanced Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="w-4 h-4 text-gray-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-              <p className="text-xs text-gray-600 mt-1">Registered students</p>
-            </CardContent>
-          </Card>
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-700 text-white border-none hover:scale-105 transition-transform shadow-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium opacity-90">Total Users</CardTitle>
+                  <Users className="w-5 h-5 opacity-80" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats?.totalUsers || 0}</div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <ArrowUpRight className="w-3 h-3" />
+                    <span className="text-xs opacity-90">All registered students</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Online Now</CardTitle>
-              <UserCheck className="w-4 h-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats?.onlineUsers || 0}</div>
-              <p className="text-xs text-gray-600 mt-1">Currently active</p>
-            </CardContent>
-          </Card>
+              <Card className="bg-gradient-to-br from-green-500 to-green-700 text-white border-none hover:scale-105 transition-transform shadow-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium opacity-90">Online Now</CardTitle>
+                  <UserCheck className="w-5 h-5 opacity-80" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats?.onlineUsers || 0}</div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <span className="text-xs opacity-90">Currently active</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Today</CardTitle>
-              <Activity className="w-4 h-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats?.activeToday || 0}</div>
-              <p className="text-xs text-gray-600 mt-1">Last 24 hours</p>
-            </CardContent>
-          </Card>
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-700 text-white border-none hover:scale-105 transition-transform shadow-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium opacity-90">Active Today</CardTitle>
+                  <Activity className="w-5 h-5 opacity-80" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats?.activeToday || 0}</div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-xs opacity-90">Last 24 hours</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">New This Week</CardTitle>
-              <TrendingUp className="w-4 h-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{stats?.recentRegistrations || 0}</div>
-              <p className="text-xs text-gray-600 mt-1">Recent registrations</p>
-            </CardContent>
-          </Card>
-        </div>
-
-            {/* Device Breakdown */}
-            <Card>
-          <CardHeader>
-            <CardTitle>Device Usage</CardTitle>
-            <CardDescription>Distribution of devices used by students</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 flex-wrap">
-              {stats?.deviceBreakdown && Object.entries(stats.deviceBreakdown).map(([device, count]) => (
-                <div key={device} className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
-                  {getDeviceIcon(device)}
-                  <span className="font-medium capitalize">{device}</span>
-                  <Badge variant="secondary">{count}</Badge>
-                </div>
-              ))}
+              <Card className="bg-gradient-to-br from-pink-500 to-pink-700 text-white border-none hover:scale-105 transition-transform shadow-xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium opacity-90">New This Week</CardTitle>
+                  <TrendingUp className="w-5 h-5 opacity-80" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats?.recentRegistrations || 0}</div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <ArrowUpRight className="w-3 h-3" />
+                    <span className="text-xs opacity-90">Recent registrations</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-            </Card>
+
+            {/* Device Distribution & Activity Heatmap */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Device Distribution Pie Chart */}
+              <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-purple-200/50 transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-purple-600" />
+                    Device Distribution
+                  </CardTitle>
+                  <CardDescription>How students access the platform</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {deviceChartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={deviceChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {deviceChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[250px] flex items-center justify-center text-gray-400">
+                      No device data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Activity Heatmap */}
+              <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl hover:shadow-blue-200/50 transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                    Peak Activity Hours
+                  </CardTitle>
+                  <CardDescription>When students are most active (24h)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-12 gap-1">
+                    {peakHours.map((hour) => (
+                      <div
+                        key={hour.hour}
+                        className={cn(
+                          "aspect-square rounded flex items-center justify-center text-xs font-medium transition-all hover:scale-110 cursor-pointer",
+                          hour.count > 100 ? "bg-purple-600 text-white shadow-lg" :
+                          hour.count > 50 ? "bg-purple-400 text-white" :
+                          hour.count > 20 ? "bg-purple-200 text-purple-900" :
+                          "bg-gray-100 text-gray-600"
+                        )}
+                        title={`${hour.label}: ${hour.count} activities`}
+                      >
+                        {hour.hour}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
+                    <span>Midnight</span>
+                    <span>Noon</span>
+                    <span>Midnight</span>
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 justify-center">
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-gray-100 rounded" />
+                      <span className="text-xs text-gray-600">Low</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-purple-200 rounded" />
+                      <span className="text-xs text-gray-600">Medium</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-purple-600 rounded" />
+                      <span className="text-xs text-gray-600">High</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card>
-          <CardHeader>
-            <CardTitle>All Students</CardTitle>
-            <CardDescription>Manage student accounts and track activity</CardDescription>
-            <div className="mt-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search by username or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b">
-                  <tr className="text-left text-sm text-gray-600">
-                    <th className="pb-3 font-medium">Student</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Device</th>
-                    <th className="pb-3 font-medium">Last Login</th>
-                    <th className="pb-3 font-medium">Study Time</th>
-                    <th className="pb-3 font-medium">Level</th>
-                    <th className="pb-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="text-sm">
-                      <td className="py-3">
-                        <div>
-                          <div className="font-medium">{user.username}</div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        {user.isOnline ? (
-                          <Badge className="bg-green-100 text-green-800">Online</Badge>
-                        ) : (
-                          <Badge variant="secondary">Offline</Badge>
-                        )}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          {getDeviceIcon(user.deviceType)}
-                          <span className="capitalize text-gray-600">{user.deviceType || "Unknown"}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span className="text-xs">{formatDate(user.lastLoginAt)}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-gray-600">
-                        {user.stats?.totalStudyTime || "0"} min
-                      </td>
-                      <td className="py-3">
-                        <Badge variant="outline">Level {user.stats?.level || "1"}</Badge>
-                      </td>
-                      <td className="py-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setResetDialogOpen(true);
-                          }}
+            <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-purple-600" />
+                  All Students
+                </CardTitle>
+                <CardDescription>Manage student accounts and track activity</CardDescription>
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by username or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      <SelectItem value="online">Online Only</SelectItem>
+                      <SelectItem value="offline">Offline Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-800/50">
+                      <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 rounded-tl-lg">Student</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Device</th>
+                        <th className="px-4 py-3">Last Login</th>
+                        <th className="px-4 py-3">Study Time</th>
+                        <th className="px-4 py-3">Level</th>
+                        <th className="px-4 py-3 rounded-tr-lg">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredUsers.map((user, index) => (
+                        <tr 
+                          key={user.id} 
+                          className={cn(
+                            "text-sm hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-colors",
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/30'
+                          )}
                         >
-                          <Key className="w-3 h-3 mr-1" />
-                          Reset Password
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "w-2 h-2 rounded-full",
+                                user.isOnline ? "bg-green-500 animate-pulse" : "bg-gray-300"
+                              )} />
+                              <div>
+                                <div className="font-medium">{user.username}</div>
+                                <div className="text-xs text-gray-500">{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {user.isOnline ? (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Online</Badge>
+                            ) : (
+                              <Badge variant="secondary">Offline</Badge>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {getDeviceIcon(user.deviceType)}
+                              <span className="capitalize text-gray-600 dark:text-gray-400">{user.deviceType || "Unknown"}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span className="text-xs">{formatDate(user.lastLoginAt)}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                            {user.stats?.totalStudyTime || "0"} min
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className="border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-400">
+                              Level {user.stats?.level || "1"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setResetDialogOpen(true);
+                              }}
+                              className="hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-colors"
+                            >
+                              <Key className="w-3 h-3 mr-1" />
+                              Reset
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredUsers.length === 0 && (
+                    <div className="text-center py-12 text-gray-400">
+                      <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No students found matching your filters</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
 
