@@ -251,33 +251,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Content */}
-        <div className="flex-1 p-4 pb-28 md:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+        <div className="flex-1 p-4 md:p-8 pb-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
           {children}
         </div>
-
-        {/* Mobile Bottom Nav - Horizontal Scroll Fixed */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-bottom">
-          <div className="overflow-x-auto overflow-y-hidden scrollbar-hide overscroll-x-contain">
-            <div className="flex items-center h-16 px-2 min-w-max gap-1">
-              {navItems.map((item) => {
-                 const isActive = location === item.href;
-                 return (
-                   <Link 
-                     key={item.href} 
-                     href={item.href}
-                     className={cn(
-                       "flex flex-col items-center justify-center p-3 rounded-lg gap-1 flex-shrink-0 min-w-[80px] min-h-[56px] touch-manipulation",
-                       isActive ? "text-primary" : "text-muted-foreground"
-                     )}
-                   >
-                     <item.icon className={cn("h-5 w-5", isActive && "fill-current")} />
-                     <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
-                   </Link>
-                 )
-              })}
-            </div>
-          </div>
-        </nav>
       </main>
     </div>
   );
