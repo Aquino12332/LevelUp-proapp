@@ -18,7 +18,6 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByProviderId(provider: string, providerId: string): Promise<User | undefined>;
-  getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   updatePassword(userId: string, hashedPassword: string): Promise<boolean>;
@@ -151,8 +150,6 @@ export class MemStorage implements IStorage {
       provider: insertUser.provider ?? "local",
       providerId: insertUser.providerId ?? null,
       avatar: insertUser.avatar ?? null,
-      resetToken: null,
-      resetTokenExpiry: null,
       createdAt: now,
       lastLoginAt: null,
       lastLogoutAt: null,
@@ -163,13 +160,6 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async getUserByResetToken(token: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.resetToken === token && 
-                user.resetTokenExpiry && 
-                user.resetTokenExpiry > new Date(),
-    );
-  }
 
   async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
     const user = this.users.get(id);
@@ -189,8 +179,6 @@ export class MemStorage implements IStorage {
     const updated: User = {
       ...user,
       password: hashedPassword,
-      resetToken: null,
-      resetTokenExpiry: null,
     };
     this.users.set(userId, updated);
     return true;

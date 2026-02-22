@@ -11,8 +11,6 @@ export const users = pgTable("users", {
   provider: varchar("provider").default("local"), // 'local', 'google', etc.
   providerId: text("providerId"), // OAuth provider's user ID
   avatar: text("avatar"), // profile picture URL
-  resetToken: text("resetToken"), // password reset token
-  resetTokenExpiry: timestamp("resetTokenExpiry"), // token expiration time
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   // Admin tracking fields
   lastLoginAt: timestamp("lastLoginAt"),

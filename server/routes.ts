@@ -1237,7 +1237,7 @@ export async function registerRoutes(
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       
       // Remove sensitive data and calculate online status
-      const sanitizedUsers = usersWithStats.map(({ password, resetToken, resetTokenExpiry, ...user }) => ({
+      const sanitizedUsers = usersWithStats.map(({ password, ...user }) => ({
         ...user,
         stats: user.stats,
         // Safe access to optional fields that may not exist yet
