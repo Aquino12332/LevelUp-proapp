@@ -203,6 +203,17 @@ export default function SignIn() {
                   </div>
 
 
+                  <div className="flex items-center justify-between mb-4">
+                    <div></div>
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/forgot-password")}
+                      className="text-sm text-purple-600 hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
