@@ -17,7 +17,6 @@ import {
   Tablet,
   LogOut,
   Search,
-  Key,
   Clock,
   TrendingUp,
   BarChart3,
@@ -77,9 +76,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [resetting, setResetting] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
   const adminSecret = sessionStorage.getItem("adminSecret");
@@ -129,43 +125,6 @@ export default function AdminDashboard() {
     setLocation("/admin/login");
   };
 
-  const handleResetPassword = async () => {
-    if (!selectedUser || !newPassword) return;
-
-    setResetting(true);
-    try {
-      const response = await fetch(`/api/admin/users/${selectedUser.id}/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-secret": adminSecret!,
-        },
-        body: JSON.stringify({ newPassword }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to reset password");
-      }
-
-      toast({
-        title: "Success",
-        description: `Password reset successfully for ${selectedUser.username}`,
-      });
-
-      setResetDialogOpen(false);
-      setNewPassword("");
-      setSelectedUser(null);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setResetting(false);
-    }
-  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -468,18 +427,6 @@ export default function AdminDashboard() {
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setResetDialogOpen(true);
-                              }}
-                              className="hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-colors"
-                            >
-                              <Key className="w-3 h-3 mr-1" />
-                              Reset
-                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -508,46 +455,6 @@ export default function AdminDashboard() {
         </Tabs>
       </div>
 
-      {/* Reset Password Dialog */}
-      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Reset password for {selectedUser?.username} ({selectedUser?.email})
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                placeholder="Enter new password (min 6 characters)"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={6}
-              />
-            </div>
-            <Alert>
-              <AlertDescription>
-                The password will be changed immediately. The student will need to use this new password to login.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleResetPassword} 
-              disabled={resetting || newPassword.length < 6}
-            >
-              {resetting ? "Resetting..." : "Reset Password"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

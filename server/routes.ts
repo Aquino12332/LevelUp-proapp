@@ -8,10 +8,7 @@ import type { InsertAlarm, InsertNote, InsertTask, InsertUserStats, InsertFocusS
 import bcrypt from "bcrypt";
 import session from "express-session";
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { LIMITS, LIMIT_MESSAGES } from "@shared/limits";
-import crypto from "crypto";
-import { sendPasswordResetEmail, sendPasswordChangedEmail } from "./email";
 import { generateNoteSummary } from "./ai";
 import { trackUserActivity, requireAdmin, detectDeviceType, getClientIp } from "./admin-middleware";
 import { trackActivity } from "./activity-tracker";
@@ -112,67 +109,6 @@ export async function registerRoutes(
     }
   });
 
-  // Configure Google OAuth Strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/auth/google/callback",
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            // Check if user exists with this Google ID
-            let user = await storage.getUserByProviderId("google", profile.id);
-            
-            if (!user) {
-              // Check if user exists with this email
-              const email = profile.emails?.[0]?.value;
-              if (email) {
-                user = await storage.getUserByEmail(email);
-              }
-              
-              if (!user) {
-                // Create new user
-                const username = profile.emails?.[0]?.value?.split('@')[0] || profile.displayName || `user_${profile.id}`;
-                user = await storage.createUser({
-                  username: username,
-                  email: profile.emails?.[0]?.value,
-                  provider: "google",
-                  providerId: profile.id,
-                  avatar: profile.photos?.[0]?.value,
-                  password: null, // OAuth users don't have passwords
-                });
-
-                // Create user stats for new user
-                await storage.createUserStats(user.id, {
-                  name: profile.displayName || username,
-                  level: "1",
-                  xp: "0",
-                  coins: "0",
-                  streak: "0",
-                  totalStudyTime: "0",
-                  tasksCompleted: "0",
-                });
-              } else {
-                // Update existing user with Google info
-                user = await storage.updateUser(user.id, {
-                  provider: "google",
-                  providerId: profile.id,
-                  avatar: profile.photos?.[0]?.value,
-                });
-              }
-            }
-
-            done(null, user);
-          } catch (error) {
-            done(error as Error, undefined);
-          }
-        }
-      )
-    );
-  }
 
   // Authentication routes
   app.post("/api/auth/register", authLimiter, async (req, res) => {
@@ -327,190 +263,8 @@ export async function registerRoutes(
     }
   });
 
-  // Google OAuth routes
-  app.get("/api/auth/google", 
-    passport.authenticate("google", { scope: ["profile", "email"] })
-  );
 
-  app.get("/api/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/signin" }),
-    (req, res) => {
-      // Set session
-      const user = req.user as any;
-      req.session.userId = user.id;
-      req.session.username = user.username;
-      
-      // Redirect to home page
-      res.redirect("/");
-    }
-  );
 
-  // Password reset routes
-  app.post("/api/auth/forgot-password", async (req, res) => {
-    try {
-      const { email } = req.body;
-
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-
-      // Find user by email
-      const user = await storage.getUserByEmail(email);
-      
-      // Always return success to prevent email enumeration
-      if (!user) {
-        return res.json({ 
-          success: true, 
-          message: "If an account exists with this email, you will receive a password reset link." 
-        });
-      }
-
-      // Check if user is OAuth user (no password)
-      if (user.provider !== "local" || !user.password) {
-        return res.status(400).json({ 
-          error: "This account uses Google sign-in. Please sign in with Google instead." 
-        });
-      }
-
-      // Generate reset token
-      const resetToken = crypto.randomBytes(32).toString("hex");
-      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-      // Save token to user
-      await storage.updateUser(user.id, {
-        resetToken,
-        resetTokenExpiry,
-      } as any);
-
-      // Send email
-      const emailSent = await sendPasswordResetEmail(email, resetToken, user.username);
-
-      if (!emailSent) {
-        console.error("Failed to send password reset email");
-      }
-
-      res.json({ 
-        success: true, 
-        message: "If an account exists with this email, you will receive a password reset link." 
-      });
-    } catch (error) {
-      console.error("Forgot password error:", error);
-      res.status(500).json({ error: "Failed to process password reset request" });
-    }
-  });
-
-  app.post("/api/auth/reset-password", async (req, res) => {
-    try {
-      const { token, newPassword } = req.body;
-
-      if (!token || !newPassword) {
-        return res.status(400).json({ error: "Token and new password are required" });
-      }
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters long" });
-      }
-
-      // Find user by reset token
-      const user = await storage.getUserByResetToken(token);
-
-      if (!user) {
-        return res.status(400).json({ error: "Invalid or expired reset token" });
-      }
-
-      // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      // Update password and clear reset token
-      await storage.updatePassword(user.id, hashedPassword);
-
-      // Send confirmation email
-      if (user.email) {
-        await sendPasswordChangedEmail(user.email, user.username);
-      }
-
-      res.json({ 
-        success: true, 
-        message: "Password has been reset successfully. You can now sign in with your new password." 
-      });
-    } catch (error) {
-      console.error("Reset password error:", error);
-      res.status(500).json({ error: "Failed to reset password" });
-    }
-  });
-
-  // Admin endpoint for manual password resets
-  app.post("/api/admin/reset-password", async (req, res) => {
-    try {
-      const { adminSecret, email, newPassword } = req.body;
-
-      // Validate admin secret
-      if (!process.env.ADMIN_SECRET) {
-        return res.status(500).json({ error: "Admin secret not configured" });
-      }
-
-      if (adminSecret !== process.env.ADMIN_SECRET) {
-        console.warn(`⚠️ Unauthorized admin password reset attempt for email: ${email}`);
-        return res.status(403).json({ error: "Unauthorized - Invalid admin secret" });
-      }
-
-      // Validate inputs
-      if (!email || !newPassword) {
-        return res.status(400).json({ error: "Email and new password are required" });
-      }
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters long" });
-      }
-
-      // Find user by email
-      const user = await storage.getUserByEmail(email);
-
-      if (!user) {
-        return res.status(404).json({ error: `User not found with email: ${email}` });
-      }
-
-      // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      // Update password
-      await storage.updatePassword(user.id, hashedPassword);
-
-      console.log(`✅ Admin password reset successful for user: ${email}`);
-
-      res.json({ 
-        success: true, 
-        message: `Password successfully reset for ${email}`,
-        userId: user.id,
-        username: user.username
-      });
-    } catch (error) {
-      console.error("❌ Admin password reset error:", error);
-      res.status(500).json({ error: "Failed to reset password" });
-    }
-  });
-
-  app.post("/api/auth/verify-reset-token", async (req, res) => {
-    try {
-      const { token } = req.body;
-
-      if (!token) {
-        return res.status(400).json({ error: "Token is required" });
-      }
-
-      // Check if token is valid
-      const user = await storage.getUserByResetToken(token);
-
-      if (!user) {
-        return res.status(400).json({ valid: false, error: "Invalid or expired reset token" });
-      }
-
-      res.json({ valid: true, username: user.username });
-    } catch (error) {
-      console.error("Verify reset token error:", error);
-      res.status(500).json({ error: "Failed to verify reset token" });
-    }
-  });
 
   // Alarm routes
   app.get("/api/alarms", async (req, res) => {
@@ -1558,36 +1312,6 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/users/:userId/reset-password", requireAdmin, async (req, res) => {
-    try {
-      const { newPassword } = req.body;
-      const userId = req.params.userId;
-      
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters long" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await storage.updatePassword(userId, hashedPassword);
-      
-      console.log(`✅ Admin password reset successful for user: ${user.username} (${user.email})`);
-      
-      res.json({ 
-        success: true, 
-        message: `Password successfully reset for ${user.username}`,
-        userId: user.id,
-        username: user.username
-      });
-    } catch (error) {
-      console.error("❌ Admin password reset error:", error);
-      res.status(500).json({ error: "Failed to reset password" });
-    }
-  });
 
   // Analytics endpoints
   app.get("/api/admin/analytics/overview", requireAdmin, async (req, res) => {
