@@ -21,8 +21,6 @@ import Shop from "@/pages/Shop";
 import Alarm from "@/pages/Alarm";
 import Profile from "@/pages/Profile";
 import SignIn from "@/pages/SignIn";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 
@@ -47,8 +45,6 @@ function Router() {
     <>
       <Switch>
         <Route path="/signin" component={SignIn} />
-        <Route path="/forgot-password" component={ForgotPassword} />
-        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="*">
