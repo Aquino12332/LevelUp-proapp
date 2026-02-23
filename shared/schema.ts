@@ -81,33 +81,6 @@ export const tasks = pgTable("tasks", {
   recurringGroupIdx: index("tasks_recurringGroup_idx").on(table.recurringGroupId),
 }));
 
-// Guest session tracking
-export const guestSessions = pgTable("guestSessions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: text("sessionId").notNull().unique(),
-  deviceType: text("deviceType"), // mobile, tablet, desktop
-  ipAddress: text("ipAddress"),
-  userAgent: text("userAgent"),
-  visitTimestamp: timestamp("visitTimestamp").defaultNow().notNull(),
-  pageVisited: text("pageVisited"),
-  timeSpent: integer("timeSpent").default(0), // seconds
-  convertedToUser: boolean("convertedToUser").default(false),
-  userId: uuid("userId"),
-  expiresAt: timestamp("expiresAt").notNull(), // auto-delete after 7 days
-});
-
-export const guestMonthlyStats = pgTable("guestMonthlyStats", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  month: text("month").notNull().unique(), // YYYY-MM format
-  totalGuestSessions: integer("totalGuestSessions").default(0),
-  uniqueGuests: integer("uniqueGuests").default(0),
-  conversionsToUser: integer("conversionsToUser").default(0),
-  conversionRate: real("conversionRate").default(0), // percentage
-  deviceBreakdown: json("deviceBreakdown").$type<{mobile: number, desktop: number, tablet: number}>(),
-  topPages: json("topPages").$type<{page: string, views: number}[]>(),
-  avgTimeSpent: integer("avgTimeSpent").default(0), // seconds
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
 
 export const userStats = pgTable("userStats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

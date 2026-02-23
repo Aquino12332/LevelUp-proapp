@@ -212,7 +212,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -220,10 +220,6 @@ export default function AdminDashboard() {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="guests" className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">Guest Logs</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -448,25 +444,6 @@ export default function AdminDashboard() {
           </TabsContent>
 
           {/* Usage Monitoring Tab */}
-          {/* Guest Logs Tab */}
-          <TabsContent value="guests" className="space-y-6">
-            <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-white/20 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="w-5 h-5 text-green-600" />
-                  Guest Activity Logs
-                </CardTitle>
-                <CardDescription>Track anonymous visitors and conversion rates (Last 7 days)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Guest logging feature coming soon...</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  This will show anonymous visitor sessions, page views, and conversion to registered users.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="analytics">
             <AdminUsageMonitoring />
           </TabsContent>

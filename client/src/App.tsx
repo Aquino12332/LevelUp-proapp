@@ -11,8 +11,6 @@ import SplashScreen from "@/components/SplashScreen";
 import NotFound from "@/pages/not-found";
 import { useState, useEffect } from "react";
 import { AlarmRinging } from "@/components/AlarmRinging";
-import { useGuestTracking } from "@/hooks/useGuestTracking";
-import { useAuth } from "@/hooks/useAuth";
 
 import Dashboard from "@/pages/Dashboard";
 import Planner from "@/pages/Planner";
@@ -29,10 +27,6 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 function Router() {
-  // Track guest visits when user is not logged in
-  const { user } = useAuth();
-  useGuestTracking(!user);
-  
   // Global alarm manager - works on all pages
   const { activeAlarm, snoozeAlarm, dismissAlarm } = useAlarm();
 
