@@ -943,7 +943,7 @@ export async function registerRoutes(
       if (!subscription) return res.status(400).json({ error: 'subscription is required' });
       
       // Use authenticated user or demo user
-      const actualUserId = userId || req.user?.id || 'demo-user';
+      const actualUserId = userId || (req.user as any)?.id || 'demo-user';
       
       await savePushSubscription(actualUserId, subscription);
       res.status(201).json({ success: true, userId: actualUserId });

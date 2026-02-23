@@ -94,7 +94,7 @@ export default function Social() {
         xp: parseInt(userStat.xp),
         level: parseInt(userStat.level),
         avatar: userStat.name.substring(0, 2).toUpperCase(),
-        isUser: userStat.userId === stats.userId,
+        isUser: userStat.userId === (stats as any).userId,
       }));
 
       // Sort by XP and assign ranks

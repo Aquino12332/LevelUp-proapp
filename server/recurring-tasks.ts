@@ -199,7 +199,7 @@ export async function processAllRecurringTasks(storage: IStorage): Promise<void>
   // Get all users (in a real implementation, you'd want to paginate this)
   // For now, we'll get tasks and extract unique user IDs
   const allTasks = await storage.getAllTasks?.() || [];
-  const userIds = [...new Set(allTasks.map(task => task.userId).filter(Boolean))];
+  const userIds = Array.from(new Set(allTasks.map(task => task.userId).filter(Boolean)));
 
   console.log(`Processing recurring tasks for ${userIds.length} users...`);
 

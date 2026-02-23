@@ -95,7 +95,7 @@ export async function checkOverdueTasks() {
         // Update last notification time
         await db
           .update(tasks)
-          .set({ lastOverdueNotification: now.toISOString() })
+          .set({ lastOverdueNotification: now })
           .where(eq(tasks.id, task.id));
       }
     }
@@ -158,11 +158,11 @@ async function sendTaskNotification(
         }
       })
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error sending ${type} notification:`, error);
     
     // If push subscription is invalid, remove it
-    if (error.statusCode === 410) {
+    if (error?.statusCode === 410) {
       await db
         .update(users)
         .set({ pushSubscription: null })

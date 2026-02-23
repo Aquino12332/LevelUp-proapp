@@ -288,7 +288,7 @@ export async function getStudentUsageList(fromDate: Date, toDate: Date) {
       }
       acc[session.userId].push(session);
       return acc;
-    }, {} as Record<string, typeof focusSessions>);
+    }, {} as Record<string, typeof focusSessionsData>);
     
     // Build student usage list
     // Consider users online if they were active in the last 5 minutes

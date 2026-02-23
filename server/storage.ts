@@ -35,7 +35,7 @@ export interface IStorage {
   getUserNotes(userId: string): Promise<Note[]>; // Alias for getNotes
   getNote(id: string): Promise<Note | undefined>;
   createNote(userId: string, note: InsertNote): Promise<Note>;
-  updateNote(id: string, note: Partial<InsertNote>): Promise<Note | undefined>;
+  updateNote(id: string, note: Partial<InsertNote> & { aiSummary?: string | null }): Promise<Note | undefined>;
   deleteNote(id: string): Promise<boolean>;
 
   // Task methods
@@ -155,6 +155,8 @@ export class MemStorage implements IStorage {
       lastLogoutAt: null,
       isOnline: false,
       deviceType: null,
+      pushSubscription: null,
+      notificationPreferences: null,
     };
     this.users.set(id, user);
     return user;
@@ -256,6 +258,7 @@ export class MemStorage implements IStorage {
       userId,
       tags: insertNote.tags ?? "[]",
       isFavorite: false,
+      aiSummary: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -263,7 +266,7 @@ export class MemStorage implements IStorage {
     return note;
   }
 
-  async updateNote(id: string, updates: Partial<InsertNote>): Promise<Note | undefined> {
+  async updateNote(id: string, updates: Partial<InsertNote> & { aiSummary?: string | null }): Promise<Note | undefined> {
     const note = this.notes.get(id);
     if (!note) return undefined;
     const updated: Note = {
@@ -308,6 +311,8 @@ export class MemStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
       completedAt: null,
+      dueSoonNotificationSent: null,
+      lastOverdueNotification: null,
     };
     this.tasks.set(id, task);
     return task;
@@ -349,6 +354,8 @@ export class MemStorage implements IStorage {
       id,
       userId,
       name: insertStats.name ?? "Student",
+      age: insertStats.age ?? null,
+      gender: insertStats.gender ?? null,
       level: insertStats.level ?? "1",
       xp: insertStats.xp ?? "0",
       coins: insertStats.coins ?? "0",
@@ -607,7 +614,7 @@ export class MemStorage implements IStorage {
 
     // Get user objects for all friends
     const friends: User[] = [];
-    for (const friendId of friendIds) {
+    for (const friendId of Array.from(friendIds)) {
       const user = await this.getUser(friendId);
       if (user) friends.push(user);
     }

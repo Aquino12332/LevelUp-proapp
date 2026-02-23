@@ -51,7 +51,7 @@ const shopItems = [
   {
     name: "Daily Task Auto-Complete",
     description: "Instantly complete one daily task of your choice.",
-    price: 250,
+    price: "250",
     category: "powerups",
     icon: "✅",
     effectType: "auto_complete_daily_task",
