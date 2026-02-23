@@ -144,8 +144,9 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const now = new Date();
     const user: User = { 
-      ...insertUser, 
       id,
+      username: insertUser.username,
+      password: insertUser.password ?? null,
       email: insertUser.email ?? null,
       provider: insertUser.provider ?? "local",
       providerId: insertUser.providerId ?? null,
@@ -301,17 +302,26 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const now = new Date();
     const task: Task = {
-      ...insertTask,
       id,
       userId,
+      title: insertTask.title,
+      description: insertTask.description ?? null,
       completed: insertTask.completed ?? false,
       priority: insertTask.priority ?? "medium",
       category: insertTask.category ?? "general",
+      dueDate: insertTask.dueDate ?? null,
+      dueTime: insertTask.dueTime ?? null,
+      alarmId: insertTask.alarmId ?? null,
       tags: insertTask.tags ?? "[]",
+      isRecurring: insertTask.isRecurring ?? false,
+      recurrenceType: insertTask.recurrenceType ?? null,
+      recurrenceDays: insertTask.recurrenceDays ?? null,
+      parentTaskId: insertTask.parentTaskId ?? null,
+      recurringGroupId: insertTask.recurringGroupId ?? null,
       createdAt: now,
       updatedAt: now,
       completedAt: null,
-      dueSoonNotificationSent: null,
+      dueSoonNotificationSent: false,
       lastOverdueNotification: null,
     };
     this.tasks.set(id, task);
