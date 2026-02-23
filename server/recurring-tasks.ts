@@ -36,10 +36,18 @@ export function shouldCreateTaskToday(task: Task): boolean {
     case "custom":
       // Check if today is in the recurrenceDays array
       try {
-        const days = JSON.parse(task.recurrenceDays || "[]");
-        return Array.isArray(days) && days.includes(dayOfWeek);
+        if (!task.recurrenceDays) {
+          console.warn(`Task ${task.id} has no recurrenceDays defined`);
+          return false;
+        }
+        const days = JSON.parse(task.recurrenceDays);
+        if (!Array.isArray(days)) {
+          console.error(`Task ${task.id} recurrenceDays is not an array:`, task.recurrenceDays);
+          return false;
+        }
+        return days.includes(dayOfWeek);
       } catch (e) {
-        console.error("Error parsing recurrenceDays:", e);
+        console.error(`Error parsing recurrenceDays for task ${task.id}:`, e, "Value:", task.recurrenceDays);
         return false;
       }
 
@@ -79,57 +87,64 @@ export async function createRecurringTaskInstance(
   parentTask: Task,
   userId: string
 ): Promise<Task | null> {
-  try {
-    // Check if instance already exists for today
-    const groupId = parentTask.recurringGroupId || parentTask.id;
-    const exists = await taskInstanceExistsForToday(storage, groupId, userId);
-    
-    if (exists) {
-      console.log(`Task instance already exists for today: ${parentTask.title}`);
-      return null;
-    }
-
-    // Create new task instance for today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const newTask = await storage.createTask(userId, {
-      title: parentTask.title,
-      description: parentTask.description,
-      priority: parentTask.priority,
-      category: parentTask.category,
-      dueDate: today,
-      dueTime: parentTask.dueTime,
-      tags: parentTask.tags,
-      completed: false,
-      isRecurring: false, // Instance is not recurring itself
-      parentTaskId: parentTask.id,
-      recurringGroupId: groupId,
-    });
-
-    console.log(`Created recurring task instance: ${newTask.title} for ${today.toDateString()}`);
-    
-    // Send notification for recurring task creation
-    try {
-      const user = await storage.getUser(userId);
-      if (user) {
-        const prefs = user.notificationPreferences ? 
-          JSON.parse(user.notificationPreferences as string) : 
-          { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
-        
-        if (prefs.recurringEnabled) {
-          await sendTaskNotification(user, newTask, 'recurring');
-        }
-      }
-    } catch (error) {
-      console.error("Error sending recurring task notification:", error);
-    }
-    
-    return newTask;
-  } catch (error) {
-    console.error("Error creating recurring task instance:", error);
+  // Check if instance already exists for today
+  const groupId = parentTask.recurringGroupId || parentTask.id;
+  const exists = await taskInstanceExistsForToday(storage, groupId, userId);
+  
+  if (exists) {
+    console.log(`Task instance already exists for today: ${parentTask.title} (task: ${parentTask.id}, user: ${userId})`);
     return null;
   }
+
+  // Create new task instance for today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const newTask = await storage.createTask(userId, {
+    title: parentTask.title,
+    description: parentTask.description,
+    priority: parentTask.priority,
+    category: parentTask.category,
+    dueDate: today,
+    dueTime: parentTask.dueTime,
+    tags: parentTask.tags,
+    completed: false,
+    isRecurring: false, // Instance is not recurring itself
+    parentTaskId: parentTask.id,
+    recurringGroupId: groupId,
+  });
+
+  console.log(`Created recurring task instance: ${newTask.title} for ${today.toDateString()} (task: ${newTask.id}, user: ${userId})`);
+  
+  // Send notification for recurring task creation (non-blocking)
+  try {
+    const user = await storage.getUser(userId);
+    if (user) {
+      let prefs = { dueReminderMinutes: 60, overdueEnabled: true, recurringEnabled: true };
+      
+      if (user.notificationPreferences) {
+        try {
+          const parsed = JSON.parse(user.notificationPreferences as string);
+          if (parsed && typeof parsed === 'object') {
+            prefs = { ...prefs, ...parsed };
+          } else {
+            console.error(`User ${userId} has invalid notificationPreferences (not an object):`, user.notificationPreferences);
+          }
+        } catch (parseError) {
+          console.error(`Failed to parse notificationPreferences for user ${userId}:`, parseError, "Value:", user.notificationPreferences);
+        }
+      }
+      
+      if (prefs.recurringEnabled) {
+        await sendTaskNotification(user, newTask, 'recurring');
+      }
+    }
+  } catch (error) {
+    console.error(`Error sending recurring task notification for user ${userId}, task ${newTask.id}:`, error);
+    // Don't throw - notification failure shouldn't fail task creation
+  }
+  
+  return newTask;
 }
 
 /**
@@ -138,33 +153,39 @@ export async function createRecurringTaskInstance(
 export async function processUserRecurringTasks(
   storage: IStorage,
   userId: string
-): Promise<number> {
-  try {
-    const tasks = await storage.getTasks(userId);
-    
-    // Filter to only recurring parent tasks
-    const recurringTasks = tasks.filter(task => 
-      task.isRecurring && 
-      !task.parentTaskId && // Only parent tasks, not instances
-      !task.completed
-    );
+): Promise<{ created: number; errors: number }> {
+  const tasks = await storage.getTasks(userId);
+  
+  // Filter to only recurring parent tasks
+  const recurringTasks = tasks.filter(task => 
+    task.isRecurring && 
+    !task.parentTaskId && // Only parent tasks, not instances
+    !task.completed
+  );
 
-    let createdCount = 0;
+  let createdCount = 0;
+  let errorCount = 0;
 
-    for (const task of recurringTasks) {
+  for (const task of recurringTasks) {
+    try {
       if (shouldCreateTaskToday(task)) {
         const created = await createRecurringTaskInstance(storage, task, userId);
         if (created) {
           createdCount++;
         }
       }
+    } catch (error) {
+      errorCount++;
+      console.error(`Error processing recurring task ${task.id} for user ${userId}:`, error);
+      // Continue processing other tasks instead of failing completely
     }
-
-    return createdCount;
-  } catch (error) {
-    console.error(`Error processing recurring tasks for user ${userId}:`, error);
-    return 0;
   }
+
+  if (errorCount > 0) {
+    console.warn(`Completed processing for user ${userId}: ${createdCount} created, ${errorCount} errors`);
+  }
+
+  return { created: createdCount, errors: errorCount };
 }
 
 /**
@@ -172,24 +193,44 @@ export async function processUserRecurringTasks(
  * This should be called once per day (e.g., at midnight)
  */
 export async function processAllRecurringTasks(storage: IStorage): Promise<void> {
+  const startTime = Date.now();
   console.log("Starting recurring tasks processing...");
   
-  try {
-    // Get all users (in a real implementation, you'd want to paginate this)
-    // For now, we'll get tasks and extract unique user IDs
-    const allTasks = await storage.getAllTasks?.() || [];
-    const userIds = [...new Set(allTasks.map(task => task.userId).filter(Boolean))];
+  // Get all users (in a real implementation, you'd want to paginate this)
+  // For now, we'll get tasks and extract unique user IDs
+  const allTasks = await storage.getAllTasks?.() || [];
+  const userIds = [...new Set(allTasks.map(task => task.userId).filter(Boolean))];
 
-    let totalCreated = 0;
+  console.log(`Processing recurring tasks for ${userIds.length} users...`);
 
-    for (const userId of userIds) {
-      const created = await processUserRecurringTasks(storage, userId);
-      totalCreated += created;
+  let totalCreated = 0;
+  let totalErrors = 0;
+  let userErrors = 0;
+
+  for (const userId of userIds) {
+    try {
+      const result = await processUserRecurringTasks(storage, userId);
+      totalCreated += result.created;
+      totalErrors += result.errors;
+    } catch (error) {
+      userErrors++;
+      console.error(`Critical error processing user ${userId}:`, error);
+      // Continue processing other users
     }
+  }
 
-    console.log(`Recurring tasks processing complete. Created ${totalCreated} task instances.`);
-  } catch (error) {
-    console.error("Error in recurring tasks processing:", error);
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  
+  if (totalErrors > 0 || userErrors > 0) {
+    console.warn(
+      `Recurring tasks processing completed with errors in ${duration}s: ` +
+      `${totalCreated} tasks created, ${totalErrors} task errors, ${userErrors} user errors`
+    );
+  } else {
+    console.log(
+      `Recurring tasks processing completed successfully in ${duration}s: ` +
+      `${totalCreated} task instances created for ${userIds.length} users`
+    );
   }
 }
 
