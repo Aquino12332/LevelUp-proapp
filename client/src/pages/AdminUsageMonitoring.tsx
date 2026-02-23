@@ -54,6 +54,13 @@ export default function AdminUsageMonitoring() {
       const hoursData = await hoursRes.json();
       const studentsData = await studentsRes.json();
 
+      console.log('📊 Analytics Data:', {
+        overview: overviewData,
+        studyTimeTrend: trendData,
+        peakHours: hoursData,
+        studentUsage: studentsData
+      });
+      
       setOverview(overviewData);
       setStudyTimeTrend(trendData);
       setPeakHours(hoursData);
