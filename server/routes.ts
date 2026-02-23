@@ -1363,33 +1363,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/analytics/study-time-trend", requireAdmin, async (req, res) => {
-    try {
-      const { from, to } = req.query;
-      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const toDate = to ? new Date(to as string) : new Date();
-      
-      const trend = await getStudyTimeTrend(fromDate, toDate);
-      res.json(trend);
-    } catch (error) {
-      console.error("Failed to get study time trend:", error);
-      res.status(500).json({ error: "Failed to get study time trend" });
-    }
-  });
+Tool call argument 'replace' pruned from message history.
 
-  app.get("/api/admin/analytics/peak-hours", requireAdmin, async (req, res) => {
-    try {
-      const { from, to } = req.query;
-      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const toDate = to ? new Date(to as string) : new Date();
-      
-      const hours = await getPeakUsageHours(fromDate, toDate);
-      res.json(hours);
-    } catch (error) {
-      console.error("Failed to get peak usage hours:", error);
-      res.status(500).json({ error: "Failed to get peak usage hours" });
-    }
-  });
+Tool call argument 'replace' pruned from message history.
 
   app.get("/api/admin/analytics/daily-active-users", requireAdmin, async (req, res) => {
     try {
@@ -1407,9 +1383,35 @@ export async function registerRoutes(
 
   app.get("/api/admin/analytics/student-usage", requireAdmin, async (req, res) => {
     try {
-      const { from, to } = req.query;
-      const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const toDate = to ? new Date(to as string) : new Date();
+      const { from, to, range } = req.query;
+      
+      let fromDate: Date, toDate: Date;
+      
+      if (range && typeof range === 'string') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        switch (range) {
+          case 'today':
+            fromDate = today;
+            toDate = now;
+            break;
+          case 'week':
+            fromDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            toDate = now;
+            break;
+          case 'month':
+            fromDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            toDate = now;
+            break;
+          default:
+            fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            toDate = now;
+        }
+      } else {
+        fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        toDate = to ? new Date(to as string) : new Date();
+      }
       
       const students = await getStudentUsageList(fromDate, toDate);
       res.json(students);
