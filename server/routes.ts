@@ -1537,5 +1537,9 @@ export async function registerRoutes(
     }
   });
 
+  // Guest tracking routes
+  const { initGuestTracking } = await import("./guest-tracking");
+  initGuestTracking(app);
+
   return httpServer;
 }
