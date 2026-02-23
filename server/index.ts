@@ -8,6 +8,7 @@ import { startAlarmChecker } from "./alarm-checker";
 import { startRecurringTasksScheduler } from "./recurring-tasks";
 import { checkDueSoonTasks, checkOverdueTasks } from "./task-notifications";
 import { storage } from "./storage";
+import { trackActivity } from "./activity-tracker";
 
 const app = express();
 const httpServer = createServer(app);
@@ -77,6 +78,9 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Add activity tracking middleware before routes
+    app.use(trackActivity);
+    
     await registerRoutes(httpServer, app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
