@@ -82,16 +82,6 @@ export const tasks = pgTable("tasks", {
 }));
 
 
-// Activity log for analytics
-export const activityLog = pgTable("activityLog", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: text("userId").notNull(),
-  action: text("action").notNull(), // e.g., "task_completed", "focus_started", "note_created"
-  feature: text("feature").notNull(), // e.g., "planner", "focus", "notes", "shop"
-  metadata: json("metadata"), // Additional context
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-});
-
 export const userStats = pgTable("userStats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("userId").notNull().unique(),
