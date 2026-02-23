@@ -12,6 +12,7 @@ import { LIMITS, LIMIT_MESSAGES } from "@shared/limits";
 import { generateNoteSummary } from "./ai";
 import { trackUserActivity, requireAdmin, detectDeviceType, getClientIp } from "./admin-middleware";
 import { trackActivity } from "./activity-tracker";
+import { logActivity } from "./activity-logger";
 import { 
   getOverviewMetrics, 
   getStudyTimeTrend, 
