@@ -26,7 +26,8 @@ import {
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
-  Filter
+  Filter,
+  Key
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
 import { 
@@ -77,6 +78,9 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [resetPasswordDialog, setResetPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const adminSecret = sessionStorage.getItem("adminSecret");
 
@@ -123,6 +127,53 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     sessionStorage.removeItem("adminSecret");
     setLocation("/admin/login");
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword) return;
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-secret": adminSecret!,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to reset password");
+      }
+
+      toast({
+        title: "Success",
+        description: `Password reset successfully for ${selectedUser.username}`,
+      });
+
+      setResetPasswordDialog(false);
+      setNewPassword("");
+      setSelectedUser(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive",
+      });
+    } finally {
+      setResettingPassword(false);
+    }
   };
 
 
@@ -427,6 +478,18 @@ export default function AdminDashboard() {
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setResetPasswordDialog(true);
+                              }}
+                              className="flex items-center gap-1"
+                            >
+                              <Key className="w-3 h-3" />
+                              Reset Password
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -454,6 +517,50 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialog} onOpenChange={setResetPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for {selectedUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                placeholder="Enter new password (min 6 characters)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={resettingPassword}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetPasswordDialog(false);
+                setNewPassword("");
+                setSelectedUser(null);
+              }}
+              disabled={resettingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resettingPassword || !newPassword}
+            >
+              {resettingPassword ? "Resetting..." : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
