@@ -281,9 +281,36 @@ export default function Notes() {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://levelup.app/notes/share/${activeNote}`);
-    toast({ title: "Link copied to clipboard" });
-    addXp(5);
+    if (!currentNote) return;
+    
+    // Create a shareable text version of the note
+    const shareText = `${currentNote.title}\n\n${currentNote.body.replace(/<[^>]*>/g, '\n').trim()}`;
+    
+    // Use Web Share API if available (mobile devices)
+    if (navigator.share) {
+      navigator.share({
+        title: currentNote.title,
+        text: shareText,
+      }).then(() => {
+        toast({ title: "Note shared successfully!" });
+        addXp(5);
+      }).catch((error) => {
+        // If user cancels, copy to clipboard instead
+        if (error.name !== 'AbortError') {
+          navigator.clipboard.writeText(shareText);
+          toast({ title: "Note content copied to clipboard" });
+          addXp(5);
+        }
+      });
+    } else {
+      // Fallback: copy note content to clipboard
+      navigator.clipboard.writeText(shareText);
+      toast({ 
+        title: "Note copied to clipboard",
+        description: "Share it anywhere by pasting!"
+      });
+      addXp(5);
+    }
   };
 
   const handleCopyAll = () => {
@@ -293,7 +320,99 @@ export default function Notes() {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!currentNote) return;
+
+    // Create a print-friendly version
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Popup blocked",
+        description: "Please allow popups to print notes",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const noteContent = editorRef.current?.innerHTML || currentNote.body;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${currentNote.title}</title>
+          <style>
+            @media print {
+              @page { margin: 2cm; }
+            }
+            body {
+              font-family: 'Georgia', serif;
+              line-height: 1.6;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              color: #333;
+            }
+            h1 {
+              font-size: 28px;
+              margin-bottom: 20px;
+              border-bottom: 2px solid #ddd;
+              padding-bottom: 10px;
+            }
+            ul, ol {
+              padding-left: 30px;
+            }
+            li {
+              margin: 5px 0;
+            }
+            .meta {
+              color: #666;
+              font-size: 14px;
+              margin-bottom: 30px;
+            }
+            .ai-summary {
+              background: #f8f9fa;
+              border-left: 4px solid #8b5cf6;
+              padding: 15px;
+              margin-top: 30px;
+            }
+            .ai-summary h3 {
+              margin-top: 0;
+              color: #8b5cf6;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${currentNote.title}</h1>
+          <div class="meta">
+            Created: ${new Date(currentNote.createdAt).toLocaleDateString()} | 
+            Last Updated: ${new Date(currentNote.updatedAt).toLocaleDateString()}
+          </div>
+          <div class="content">
+            ${noteContent}
+          </div>
+          ${currentNote.aiSummary ? `
+            <div class="ai-summary">
+              <h3>✨ AI Summary</h3>
+              <p>${currentNote.aiSummary}</p>
+            </div>
+          ` : ''}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      // Close the window after printing (user can cancel)
+      setTimeout(() => {
+        printWindow.close();
+      }, 100);
+    };
+    
+    addXp(5);
   };
 
   const handleDelete = () => {
@@ -696,39 +815,13 @@ export default function Notes() {
                         
                         <TabsContent value="link" className="space-y-4">
                           <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="access" className="text-sm font-medium">
-                                General Access
-                              </Label>
-                              <Select defaultValue="viewer">
-                                <SelectTrigger className="w-[130px] h-9">
-                                  <SelectValue placeholder="Access" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="viewer">
-                                    <div className="flex items-center gap-2">
-                                      <Lock className="h-3 w-3" />
-                                      <span>Viewer</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="commenter">Commenter</SelectItem>
-                                  <SelectItem value="editor">Editor</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <div className="flex-1 flex items-center gap-2 rounded-md border px-3 py-2.5 bg-muted/30">
-                                <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <input 
-                                  type="text" 
-                                  readOnly 
-                                  value={`https://levelup.app/notes/share/${activeNote?.substring(0, 8)}`}
-                                  className="text-sm bg-transparent border-none outline-none flex-1 min-w-0 text-muted-foreground"
-                                />
-                              </div>
-                              <Button size="sm" className="h-auto px-3 py-2.5" onClick={handleCopyLink}>
-                                <Copy className="h-4 w-4" />
+                            <div className="rounded-lg border p-4 bg-muted/10">
+                              <p className="text-sm text-muted-foreground mb-3">
+                                Share this note by copying its content to your clipboard or using the share button on mobile devices.
+                              </p>
+                              <Button className="w-full" onClick={handleCopyLink}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share Note Content
                               </Button>
                             </div>
 
