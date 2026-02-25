@@ -224,12 +224,6 @@ export default function Notes() {
     toast({ title: "AI Summary created" });
   };
 
-  const handleTextToTask = () => {
-    if (!activeNote) return;
-    addXp(10);
-    toast({ title: "Tasks added to Planner" });
-  };
-
   const toggleRecord = () => {
     if (!isSpeechSupported) {
       toast({
@@ -709,9 +703,6 @@ export default function Notes() {
                     <Mic className="h-4 w-4" /> {isListening ? "Stop" : "Voice"}
                   </Button>
                   <div className="h-4 w-px bg-border mx-1 flex-shrink-0"></div>
-                  <Button variant="ghost" size="sm" onClick={handleTextToTask} className="whitespace-nowrap flex-shrink-0">
-                    <CheckSquare className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">Text-to-Task</span><span className="sm:hidden">Tasks</span>
-                  </Button>
                   
                   {/* Tags Editor */}
                   <Dialog>
