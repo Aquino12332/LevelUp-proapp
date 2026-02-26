@@ -407,6 +407,145 @@ export async function getStudentDetail(userId: string, fromDate: Date, toDate: D
   }
 }
 
+// Update daily metrics (call this daily via cron job)
+export async function updateDailyMetrics(date?: Date) {
+  try {
+    const targetDate = date || new Date();
+    targetDate.setHours(0, 0, 0, 0); // Start of day
+    
+    const endDate = new Date(targetDate);
+    endDate.setHours(23, 59, 59, 999); // End of day
+    
+    console.log(`📊 Updating daily metrics for ${targetDate.toISOString().split('T')[0]}...`);
+    
+    // Count active users (users who had any activity that day)
+    const activeUsersResult = await db
+      .select({ count: count() })
+      .from(activityLog)
+      .where(
+        and(
+          gte(activityLog.createdAt, targetDate),
+          lte(activityLog.createdAt, endDate)
+        )
+      )
+      .groupBy(activityLog.userId);
+    
+    const activeUsers = activeUsersResult.length.toString();
+    
+    // Count new users registered that day
+    const newUsersResult = await db
+      .select({ count: count() })
+      .from(users)
+      .where(
+        and(
+          gte(users.createdAt, targetDate),
+          lte(users.createdAt, endDate)
+        )
+      );
+    
+    const newUsers = (newUsersResult[0]?.count || 0).toString();
+    
+    // Count tasks completed that day
+    const tasksCompletedResult = await db
+      .select({ count: count() })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.completed, true),
+          gte(tasks.completedAt, targetDate),
+          lte(tasks.completedAt, endDate)
+        )
+      );
+    
+    const tasksCompleted = (tasksCompletedResult[0]?.count || 0).toString();
+    
+    // Count focus sessions that day
+    const focusSessionsResult = await db
+      .select({ 
+        count: count(),
+        totalMinutes: sql<string>`SUM(CAST(${focusSessions.duration} AS INTEGER))`
+      })
+      .from(focusSessions)
+      .where(
+        and(
+          gte(focusSessions.createdAt, targetDate),
+          lte(focusSessions.createdAt, endDate)
+        )
+      );
+    
+    const focusSessionsCount = (focusSessionsResult[0]?.count || 0).toString();
+    const totalFocusMinutes = (focusSessionsResult[0]?.totalMinutes || '0').toString();
+    
+    // Insert or update daily metrics
+    const existingMetric = await db
+      .select()
+      .from(dailyMetrics)
+      .where(eq(dailyMetrics.date, targetDate))
+      .limit(1);
+    
+    if (existingMetric.length > 0) {
+      // Update existing
+      await db
+        .update(dailyMetrics)
+        .set({
+          activeUsers,
+          newUsers,
+          tasksCompleted,
+          focusSessions: focusSessionsCount,
+          totalFocusMinutes,
+        })
+        .where(eq(dailyMetrics.date, targetDate));
+      
+      console.log(`✅ Updated metrics for ${targetDate.toISOString().split('T')[0]}`);
+    } else {
+      // Insert new
+      await db.insert(dailyMetrics).values({
+        date: targetDate,
+        activeUsers,
+        newUsers,
+        tasksCompleted,
+        focusSessions: focusSessionsCount,
+        totalFocusMinutes,
+      });
+      
+      console.log(`✅ Created metrics for ${targetDate.toISOString().split('T')[0]}`);
+    }
+    
+    return {
+      date: targetDate.toISOString().split('T')[0],
+      activeUsers,
+      newUsers,
+      tasksCompleted,
+      focusSessions: focusSessionsCount,
+      totalFocusMinutes
+    };
+  } catch (error) {
+    console.error('❌ Error updating daily metrics:', error);
+    throw error;
+  }
+}
+
+// Get daily metrics for a date range
+export async function getDailyMetrics(startDate: Date, endDate: Date) {
+  try {
+    const metrics = await db
+      .select()
+      .from(dailyMetrics)
+      .where(
+        and(
+          gte(dailyMetrics.date, startDate),
+          lte(dailyMetrics.date, endDate)
+        )
+      )
+      .orderBy(desc(dailyMetrics.date));
+    
+    return metrics;
+  } catch (error) {
+    console.error('Error getting daily metrics:', error);
+    throw error;
+  }
+}
+
 // Export data to CSV format
 export function exportToCSV(data: any[], filename: string): string {
   if (data.length === 0) return '';

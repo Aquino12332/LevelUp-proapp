@@ -9,6 +9,7 @@ import { startRecurringTasksScheduler } from "./recurring-tasks";
 import { checkDueSoonTasks, checkOverdueTasks } from "./task-notifications";
 import { storage } from "./storage";
 import { trackActivity } from "./activity-tracker";
+import { updateDailyMetrics } from "./analytics";
 
 const app = express();
 const httpServer = createServer(app);
@@ -140,7 +141,25 @@ app.use((req, res, next) => {
         setTimeout(() => {
           checkDueSoonTasks().catch(err => log(`Initial due soon check failed: ${err}`, "task-notifications"));
           checkOverdueTasks().catch(err => log(`Initial overdue check failed: ${err}`, "task-notifications"));
+          
+          // Update daily metrics for today
+          updateDailyMetrics().catch(err => log(`Initial daily metrics update failed: ${err}`, "daily-metrics"));
         }, 10000);
+        
+        // Update daily metrics every day at midnight
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0); // Next midnight
+        const msUntilMidnight = midnight.getTime() - now.getTime();
+        
+        setTimeout(() => {
+          updateDailyMetrics().catch(err => log(`Daily metrics update failed: ${err}`, "daily-metrics"));
+          
+          // Then run every 24 hours
+          setInterval(() => {
+            updateDailyMetrics().catch(err => log(`Daily metrics update failed: ${err}`, "daily-metrics"));
+          }, 24 * 60 * 60 * 1000);
+        }, msUntilMidnight);
         
         log("Background services started", "services");
       }, 5000); // 5 second delay to allow Neon database to wake up

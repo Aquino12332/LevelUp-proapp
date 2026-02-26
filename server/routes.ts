@@ -20,7 +20,9 @@ import {
   getDailyActiveUsers,
   getStudentUsageList,
   getStudentDetail,
-  exportToCSV 
+  exportToCSV,
+  updateDailyMetrics,
+  getDailyMetrics
 } from "./analytics";
 import {
   trackAPIMetric,
@@ -1573,6 +1575,42 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to export data:", error);
       res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // Get daily metrics
+  app.get("/api/admin/analytics/daily-metrics", requireAdmin, async (req, res) => {
+    try {
+      const { days } = req.query;
+      const daysCount = parseInt(days as string) || 30;
+      
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysCount);
+      
+      const metrics = await getDailyMetrics(startDate, endDate);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Failed to fetch daily metrics:", error);
+      res.status(500).json({ error: "Failed to fetch daily metrics" });
+    }
+  });
+
+  // Manually trigger daily metrics update (for testing)
+  app.post("/api/admin/analytics/update-daily-metrics", requireAdmin, async (req, res) => {
+    try {
+      const { date } = req.body;
+      const targetDate = date ? new Date(date) : undefined;
+      
+      const result = await updateDailyMetrics(targetDate);
+      res.json({ 
+        success: true, 
+        message: "Daily metrics updated successfully",
+        data: result
+      });
+    } catch (error) {
+      console.error("Failed to update daily metrics:", error);
+      res.status(500).json({ error: "Failed to update daily metrics" });
     }
   });
 
