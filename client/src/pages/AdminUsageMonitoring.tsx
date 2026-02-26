@@ -261,19 +261,17 @@ export default function AdminUsageMonitoring() {
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                          className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
-                          style={{ width: `${feature.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-600">{feature.percentage}%</span>
+                      className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
+                      style={{ width: `${feature.percentage}%` }}
+                    />
                   </div>
-                ))}
+                </div>
+                <span className="text-sm text-gray-600">{feature.percentage}%</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Student Usage Table */}
       <Card>
