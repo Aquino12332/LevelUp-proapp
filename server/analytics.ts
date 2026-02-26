@@ -98,19 +98,21 @@ export async function getOverviewMetrics(fromDate: Date, toDate: Date) {
     try {
       featureUsage = await db
         .select({
-          feature: activityLog.feature,
+          feature: activityLog.action,
           count: count(activityLog.id)
         })
         .from(activityLog)
         .where(
           and(
-            gte(activityLog.timestamp, fromDate),
-            lte(activityLog.timestamp, toDate)
+            gte(activityLog.createdAt, fromDate),
+            lte(activityLog.createdAt, toDate)
           )
         )
-        .groupBy(activityLog.feature);
+        .groupBy(activityLog.action)
+        .orderBy(desc(count(activityLog.id)))
+        .limit(10);
     } catch (err) {
-      console.log('[Analytics] Could not fetch feature usage');
+      console.log('[Analytics] Could not fetch feature usage:', err);
     }
     
     // Get device breakdown

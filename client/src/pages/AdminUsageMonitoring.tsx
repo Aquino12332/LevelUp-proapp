@@ -214,7 +214,7 @@ export default function AdminUsageMonitoring() {
         </div>
       )}
 
-      {/* Study Time Trend */}
+      {/* Study Time Trend - List View */}
       {studyTimeTrend.length > 0 && (
         <Card>
           <CardHeader>
@@ -222,22 +222,19 @@ export default function AdminUsageMonitoring() {
             <CardDescription>Daily study time over selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-end gap-2">
+            <div className="space-y-2">
               {studyTimeTrend.map((day, i) => {
-                const maxMinutes = Math.max(...studyTimeTrend.map(d => d.minutes));
-                const height = (day.minutes / maxMinutes) * 100;
+                const date = new Date(day.date);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="text-xs text-gray-600 font-medium">
-                      {formatMinutes(day.minutes)}
+                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{dateStr}</div>
+                      <div className="text-xs text-gray-500">{day.sessions} session{day.sessions !== 1 ? 's' : ''}</div>
                     </div>
-                    <div
-                      className="w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t hover:opacity-80 transition-opacity cursor-pointer"
-                      style={{ height: `${height}%` }}
-                      title={`${day.date}: ${formatMinutes(day.minutes)} (${day.sessions} sessions)`}
-                    />
-                    <div className="text-xs text-gray-500">
-                      {new Date(day.date).getDate()}
+                    <div className="text-right">
+                      <div className="font-bold text-purple-600">{formatMinutes(day.minutes)}</div>
+                      <div className="text-xs text-gray-500">{day.minutes} min</div>
                     </div>
                   </div>
                 );
@@ -247,52 +244,23 @@ export default function AdminUsageMonitoring() {
         </Card>
       )}
 
-      {/* Peak Hours */}
-      {peakHours.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Peak Usage Hours</CardTitle>
-              <CardDescription>When students are most active</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 flex items-end gap-1">
-                {peakHours.map((hour) => {
-                  const maxCount = Math.max(...peakHours.map(h => h.count));
-                  const height = maxCount > 0 ? (hour.count / maxCount) * 100 : 0;
-                  return (
-                    <div key={hour.hour} className="flex-1 flex flex-col items-center gap-1">
-                      <div
-                        className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t hover:opacity-80 transition-opacity cursor-pointer"
-                        style={{ height: `${height}%` }}
-                        title={`${hour.label}: ${hour.count} activities`}
-                      />
-                      <div className="text-xs text-gray-500 transform -rotate-45 origin-top-left">
-                        {hour.hour % 3 === 0 ? hour.hour : ''}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Feature Usage</CardTitle>
-              <CardDescription>Most used app features</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {overview?.featureUsage?.slice(0, 5).map((feature: any) => (
-                  <div key={feature.feature} className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium capitalize">{feature.feature}</span>
-                        <span className="text-gray-600">{feature.count}</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
+      {/* Feature Usage - Fixed */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature Usage</CardTitle>
+          <CardDescription>Most used app features</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {overview?.featureUsage?.slice(0, 5).map((feature: any) => (
+              <div key={feature.feature} className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="font-medium capitalize">{feature.feature}</span>
+                    <span className="text-gray-600">{feature.count}</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
                           className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
                           style={{ width: `${feature.percentage}%` }}
                         />
