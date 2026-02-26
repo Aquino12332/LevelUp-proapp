@@ -70,7 +70,19 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   }
   
   if (adminSecret !== process.env.ADMIN_SECRET) {
-    console.warn(`⚠️ Unauthorized admin access attempt from IP: ${getClientIp(req)}`);
+    const ip = getClientIp(req);
+    const timestamp = new Date().toISOString();
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const endpoint = req.path;
+    
+    // Enhanced logging
+    console.warn(`🚨 SECURITY ALERT - Unauthorized admin access attempt`);
+    console.warn(`   ├─ Time: ${timestamp}`);
+    console.warn(`   ├─ IP: ${ip}`);
+    console.warn(`   ├─ Endpoint: ${endpoint}`);
+    console.warn(`   ├─ User-Agent: ${userAgent}`);
+    console.warn(`   └─ Secret provided: ${adminSecret ? '[REDACTED]' : '[NONE]'}`);
+    
     return res.status(403).json({ error: "Unauthorized - Invalid admin credentials" });
   }
   
