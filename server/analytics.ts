@@ -429,10 +429,11 @@ export async function updateDailyMetrics(date?: Date) {
           gte(activityLog.createdAt, targetDate),
           lte(activityLog.createdAt, endDate)
         )
-      )
-      .groupBy(activityLog.userId);
+      );
     
-    const activeUsers = activeUsersResult.length.toString();
+    // Count unique users manually
+    const uniqueUsers = new Set(activeUsersResult.map(r => r.userId));
+    const activeUsers = uniqueUsers.size.toString();
     
     // Count new users registered that day
     const newUsersResult = await db
