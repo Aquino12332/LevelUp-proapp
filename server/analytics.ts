@@ -435,7 +435,7 @@ export async function updateDailyMetrics(date?: Date) {
     
     // Count new users registered that day
     const newUsersResult = await db
-      .select({ count: count() })
+      .select()
       .from(users)
       .where(
         and(
@@ -444,11 +444,11 @@ export async function updateDailyMetrics(date?: Date) {
         )
       );
     
-    const newUsers = (newUsersResult[0]?.count || 0).toString();
+    const newUsers = newUsersResult.length.toString();
     
     // Count tasks completed that day
     const tasksCompletedResult = await db
-      .select({ count: count() })
+      .select()
       .from(tasks)
       .where(
         and(
@@ -458,14 +458,11 @@ export async function updateDailyMetrics(date?: Date) {
         )
       );
     
-    const tasksCompleted = (tasksCompletedResult[0]?.count || 0).toString();
+    const tasksCompleted = tasksCompletedResult.length.toString();
     
     // Count focus sessions that day
     const focusSessionsResult = await db
-      .select({ 
-        count: count(),
-        totalMinutes: sql<string>`SUM(CAST(${focusSessions.duration} AS INTEGER))`
-      })
+      .select()
       .from(focusSessions)
       .where(
         and(
@@ -474,8 +471,13 @@ export async function updateDailyMetrics(date?: Date) {
         )
       );
     
-    const focusSessionsCount = (focusSessionsResult[0]?.count || 0).toString();
-    const totalFocusMinutes = (focusSessionsResult[0]?.totalMinutes || '0').toString();
+    const focusSessionsCount = focusSessionsResult.length.toString();
+    
+    // Calculate total minutes
+    const totalMinutes = focusSessionsResult.reduce((sum, session) => {
+      return sum + (parseInt(session.duration) || 0);
+    }, 0);
+    const totalFocusMinutes = totalMinutes.toString();
     
     // Insert or update daily metrics
     const existingMetric = await db
