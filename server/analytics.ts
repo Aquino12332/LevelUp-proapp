@@ -422,14 +422,15 @@ export async function updateDailyMetrics(date?: Date) {
     
     // Count active users (users who had any activity that day)
     const activeUsersResult = await db
-      .selectDistinct({ userId: activityLog.userId })
+      .select({ userId: activityLog.userId })
       .from(activityLog)
       .where(
         and(
           gte(activityLog.createdAt, targetDate),
           lte(activityLog.createdAt, endDate)
         )
-      );
+      )
+      .groupBy(activityLog.userId);
     
     const activeUsers = activeUsersResult.length.toString();
     
